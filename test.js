@@ -13,7 +13,7 @@ const peers = {}
 // Counter for connections, used for identify connections
 let connSeq = 0
 
-// Peer Identity, a random hash for identify your peer
+// SwarmPeer Identity, a random hash for identify your peer
 const myId = crypto.randomBytes(32)
 console.log('Your identity: ' + myId.toString('hex'))
 
@@ -122,10 +122,19 @@ const sw = Swarm(config)
         if (!peers[peerId]) {
             peers[peerId] = {}
         }
+        if(peers[peerId].conn == conn){
+            console.log("is same");
+        }
         peers[peerId].conn = conn
         peers[peerId].seq = seq
         connSeq++
 
+    })
+
+    sw.on("connection-closed", function (connection, info){
+
+        const peerId = info.id.toString('hex')
+        log(`connection-closed ${peerId}`)
     })
 
     // Read user message from command line

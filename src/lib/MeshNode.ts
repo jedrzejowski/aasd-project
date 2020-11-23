@@ -1,37 +1,57 @@
+import {Socket} from "net";
+import {SwarmInfo} from "discovery-swarm";
+import {NodeMeta} from "../types/NodeMeta";
+import Json32Socket from "./Json32Socket";
 import crypto from "crypto";
-import dat_defaults from "dat-swarm-defaults";
-import getPort from "get-port";
-import swarm, {Options as SwarmOptions, Swarm} from "discovery-swarm";
+import noop from "./noop";
 
-const CHANNEL_PREFIX = "AASD_PROJECT_2020Z_";
+export const CHANNEL_PREFIX = "AASD_PROJECT_2020Z_";
 
 export default class MeshNode {
-    public readonly myId = crypto.randomBytes(32)
-    private myPort: number = -1;
-    private swarm: Swarm;
-    private config: SwarmOptions;
+    public readonly id;
+    public readonly info: SwarmInfo;
+    private socket: Socket;
+    private jsonSocket: Json32Socket;
 
-    constructor() {
+    constructor(socket: Socket, info: SwarmInfo) {
 
-        this.config = dat_defaults({
-            id: this.myId,
-        });
+        this.info = info;
+        this.id = info.id.toString("hex");
 
-
-        this.swarm = swarm(this.config);
-
-        this.initNode();
+        this.socket = socket;
+        this.jsonSocket = new Json32Socket(socket);
     }
 
-    private async initNode() {
-        this.myPort = await getPort();
-        this.swarm.listen(this.myPort)
-        this.swarm.join('TO JEST MÓJ CHANNEL');
+    private metaCache: Promise<NodeMeta> | undefined;
 
-        this.swarm.on('connection', (conn, info) => {
-            console.log(info.id.toString('hex'));
+    public sendMessage(name: string, ...args: any[]) {
+        return new Promise((resolve, reject) => {
+
+            const messageId = crypto.randomBytes(32).toString("hex");
+
+            this.jsonSocket.write({messageId, name, args});
+
+            setTimeout(() => {
+                reject(new Error("timeout"));
+                reject = resolve = noop;
+            }, 1000);
+
+            const {dispose} = this.jsonSocket.messageEvent.on((answer: any) => {
+                if (answer.messageId === messageId) {
+                    resolve(answer.answer);
+                    reject = resolve = noop;
+                    dispose();
+                }
+            });
         });
+    }
+
+    public getMeta(): Promise<NodeMeta> {
+        if (this.metaCache) {
+            return this.metaCache;
+        }
+
+        return this.metaCache = this.sendMessage("getMeta");
     }
 
 }
-
