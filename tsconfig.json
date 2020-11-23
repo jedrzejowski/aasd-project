@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "lib": [
+            "ES2020"
+        ],
+        "module": "CommonJS",
+        "target": "ES2020",
+        "declaration": true,
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "removeComments": true,
+        "esModuleInterop": true,
+        "strictNullChecks": true,
+        "strictBindCallApply": true,
+        "strictFunctionTypes": true,
+        "strict": true
+    },
+    "exclude": [
+        "./src/**/*.test.ts"
+    ],
+    "include": [
+        "./src/**/*.ts"
+    ]
+}
