@@ -14,14 +14,14 @@ export default class MeshGate {
     private myPort: number = -1;
     public readonly swarm: Swarm;
     public readonly config: SwarmOptions;
-    public readonly myMeta: NodeMeta;
+    public readonly meta: NodeMeta;
     public readonly peers: Record<string, MeshNode | undefined> = {};
 
     public readonly newPeerEvent = new TypedEvent<(mechNode: MeshNode) => void>()
 
     constructor(meta: NodeMeta, cb?: (error: any) => void) {
 
-        this.myMeta = meta;
+        this.meta = meta;
 
         this.config = dat_defaults({
             id: this.myId,
@@ -37,7 +37,7 @@ export default class MeshGate {
         this.swarm.listen(this.myPort)
 
         this.swarm.on("connection", (conn, info) => {
-            const node = new MeshNode(conn, info);
+            const node = new MeshNode(this, conn, info);
             this.peers[node.id] = node;
 
             this.newPeerEvent.emit(node);

@@ -62,10 +62,12 @@ export default class Json32Socket {
             this._msgLeft -= toRead;
 
             if (this._msgLeft === 0) {
-
-                this.messageEvent.emit(JSON.parse(this._msgBuffer));
-
-                this._msgBuffer = null;
+                try {
+                    this.messageEvent.emit(JSON.parse(this._msgBuffer));
+                    this._msgBuffer = null;
+                } catch (e) {
+                    this.socket.end();
+                }
             }
         }
     }

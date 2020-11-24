@@ -1,0 +1,1 @@
+export const hex_id_regex = /^[0-9a-f]{64}$/;
