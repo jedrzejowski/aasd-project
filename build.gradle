@@ -1,0 +1,28 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.20'
+}
+
+group 'edu.pl.edu.pw.aasddudes'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+
+    // używamy pliku offline ponieważ certyfikat ssl tej strony jest wystawiony dla kogoś innego ...
+    // "aktywnie rozwiany projekt" ... ostatni update 2017 ...
+    // maven {
+    //    url 'https://jade.tilab.com/maven/'
+    // }
+    flatDir {
+        dirs 'lib'
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    // https://mvnrepository.com/artifact/com.tilab.jade/jade
+    compile group: 'com.tilab.jade', name: 'jade', version: '4.5.0'
+}
