@@ -34,3 +34,9 @@ gradle-app.setting
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+src-jade
+src-examples
+# pliki generowane przez biblioteke JADE
+APDescription.txt
+MTPs-Main-Container.txt

@@ -28,7 +28,7 @@ dependencies {
 
 jar {
     manifest {
-        attributes "Main-Class": "pl.edu.pw.aasd.main"
+        attributes "Main-Class": "jade.Boot"
     }
 
     from {
