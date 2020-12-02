@@ -1,4 +1,4 @@
-package pl.edu.pw.aasd.agent;
+package pl.edu.pw.aasd;
 
 import jade.core.Agent;
 
