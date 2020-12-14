@@ -10,6 +10,10 @@ public class PetrolPrice extends Jsonable {
     public PetrolPrice() {
     }
 
+    static public PetrolPrice from(String json) {
+        return gson.fromJson(json, PetrolPrice.class);
+    }
+
     public String getPb98() {
         return pb98;
     }
