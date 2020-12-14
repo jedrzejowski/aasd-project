@@ -2,7 +2,6 @@ package pl.edu.pw.aasd.agent;
 
 import jade.core.AID;
 import jade.core.Agent;
-import pl.edu.pw.aasd.data.StationDescription;
 import pl.edu.pw.aasd.promise.Promise;
 
 

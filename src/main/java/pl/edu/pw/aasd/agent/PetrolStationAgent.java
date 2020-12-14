@@ -3,53 +3,50 @@ package pl.edu.pw.aasd.agent;
 import com.google.gson.Gson;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import pl.edu.pw.aasd.AgentHelper;
 import pl.edu.pw.aasd.data.PetrolPrice;
 import pl.edu.pw.aasd.data.StationDescription;
+import pl.edu.pw.aasd.data.UserVote;
 import pl.edu.pw.aasd.promise.Promise;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class PetrolStationAgent extends Agent {
 
     StationDescription stationDescription;
+    Collection<UserVote> votes = new ArrayList<>();
 
     @Override
     protected void setup() {
         AgentHelper.registerServices(this, "petrolStation");
 
-        AgentHelper.setupNewService(this, MessageTemplate.and(
-                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                MessageTemplate.MatchOntology("checkPrice")
-        ), msg -> {
-            ACLMessage reply = msg.createReply();
-            reply.setOntology("priceReply");
-            reply.setContent(getCurrentPrice().toJSON());
-            this.send(reply);
+        AgentHelper.setupNewService(this, "checkPrice", msg -> {
+            AgentHelper.sendInform(this, msg, getCurrentPrice());
         });
 
-        AgentHelper.setupNewService(this, MessageTemplate.and(
-                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                MessageTemplate.MatchOntology("setStationDescription")
-        ), msg -> {
+        AgentHelper.setupNewService(this, "setStationDescription", msg -> {
             var stationDescription = StationDescription.from(msg.getContent());
 
-            this.setStationDescription(msg.getSender(), stationDescription)
-                    .thenAccept((__) -> {
-                        ACLMessage reply = msg.createReply();
-                        reply.setOntology("accepted");
-                        reply.setContent("{}");
-                        this.send(reply);
-                    })
-                    .onError(err -> {
-                        ACLMessage reply = msg.createReply();
-                        reply.setOntology("rejected");
-                        reply.setContent("{}");
-                        this.send(reply);
-                    });
+            OwnerAgent.authOwner(msg.getSender())
+                    .thenAccept((__) -> this.setStationDescription(stationDescription))
+                    .thenAccept((__) -> AgentHelper.sendConfirm(this, msg))
+                    .onError(err -> AgentHelper.sendFailure(this, msg, err));
+        });
+
+        AgentHelper.setupNewService(this, "setPrice", msg -> {
+
+        });
+
+        AgentHelper.setupNewService(this, "addPriceProposition", msg -> {
+
+        });
+
+        AgentHelper.setupNewService(this, "addVote", msg -> {
+
         });
     }
 
@@ -64,12 +61,8 @@ public class PetrolStationAgent extends Agent {
         return stationDescription;
     }
 
-    public Promise<Void> setStationDescription(AID agent, StationDescription stationDescription) {
-        return OwnerAgent.authOwner(agent)
-                .thenApply((__) -> {
-                    this.stationDescription = stationDescription;
-                    return null;
-                });
+    public void setStationDescription(StationDescription stationDescription) {
+        this.stationDescription = stationDescription;
     }
 
     public static Promise<DFAgentDescription[]> findAll(Agent agent) {
