@@ -2,7 +2,6 @@ package pl.edu.pw.aasd;
 
 import com.google.gson.Gson;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 public class Jsonable {
@@ -23,5 +22,9 @@ public class Jsonable {
 
     static public <T extends Jsonable> String toJson(Collection<T> list) {
         return gson.toJson(list.stream().map(Jsonable::toJSON).toArray());
+    }
+
+    static public <T extends Jsonable> String toJson(Object obj) {
+        return gson.toJson(obj);
     }
 }

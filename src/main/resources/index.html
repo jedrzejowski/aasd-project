@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="boostrap.css"/>
+
+    <style>
+        :not(body).useragent,
+        :not(body).petrolstationagent {
+            display: none;
+        }
+
+        body.useragent .useragent {
+            display: inherit;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="page-header">
+    <h1>
+        <small>Agent name:</small>
+        <span id="agent-name"></span>
+        <br>
+        <small>Agent class:</small>
+        <span id="agent-class"></span>
+    </h1>
+</div>
+
+
+<div class="container useragent">
+    <div class="toolbar">
+        <div>Stacje</div>
+        <button id="find-petrol-stations">Znajdz stacje</button>
+    </div>
+    <table>
+        <tbody id="stations">
+
+        </tbody>
+    </table>
+</div>
+
+
+<script src="index.js"></script>
+
+</body>
+</html>

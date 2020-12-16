@@ -120,7 +120,6 @@ public class Promise<T> extends PromiseSupport<T> {
     }
 
 
-
     /**
      * Accesses the value from source promise and calls the consumer, then fulfills the destination
      * promise.
@@ -211,5 +210,11 @@ public class Promise<T> extends PromiseSupport<T> {
 
     public static <T> Promise<ValueOfException<T>[]> all(Stream<Promise<T>> promises) {
         return all((Promise[]) promises.toArray());
+    }
+
+    public static <T> Promise<T> fulfilled(T obj) {
+        var promise = new Promise<T>();
+        promise.fulfillInAsync(() -> obj);
+        return promise;
     }
 }

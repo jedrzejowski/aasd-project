@@ -16,6 +16,7 @@ import pl.edu.pw.aasd.promise.Promise;
 
 public class AgentHelper {
 
+
     public static void registerServices(Agent agent, String... serviceNames) {
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(agent.getAID());
@@ -23,6 +24,7 @@ public class AgentHelper {
         for (var serviceName : serviceNames) {
             ServiceDescription sd = new ServiceDescription();
             sd.setType(serviceName);
+            sd.setName(serviceName);
             dfd.addServices(sd);
         }
 

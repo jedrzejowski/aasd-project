@@ -1,14 +1,15 @@
 package pl.edu.pw.aasd.agent;
 
-import jade.core.Agent;
+import jade.core.AID;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import org.javatuples.Pair;
+import pl.edu.pw.aasd.AgentWithFace;
 import pl.edu.pw.aasd.data.PetrolPrice;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class UserAgent extends Agent {
+public class UserAgent extends AgentWithFace {
 
     @Override
     protected void setup() {
@@ -45,7 +46,21 @@ public class UserAgent extends Agent {
                 }
             }
         }).start();
+
+
     }
 
+    @Override
+    protected void setupPings() {
+
+    }
+
+    public void setPetrolStationPrice(AID petrolStation, PetrolPrice petrolPrice) {
+
+    }
+
+    public void voteOnStation(AID petrolStation, PetrolPrice petrolPrice) {
+
+    }
 
 }
