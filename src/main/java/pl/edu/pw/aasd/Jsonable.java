@@ -1,14 +1,15 @@
 package pl.edu.pw.aasd;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 
 import java.util.Collection;
 
 public class Jsonable {
     public static Gson gson = new Gson();
 
-    public String toJSON() {
-        return gson.toJson(this);
+    public JsonElement toJson() {
+        return gson.toJsonTree(this);
     }
 
     static public <T> T from(String json, Class<T> c) {
@@ -17,11 +18,11 @@ public class Jsonable {
 
     @Override
     public String toString() {
-        return toJSON();
+        return gson.toJson(this);
     }
 
     static public <T extends Jsonable> String toJson(Collection<T> list) {
-        return gson.toJson(list.stream().map(Jsonable::toJSON).toArray());
+        return gson.toJson(list.stream().map(Jsonable::toString).toArray());
     }
 
     static public <T extends Jsonable> String toJson(Object obj) {

@@ -22,10 +22,56 @@ async function setupUI() {
     document.body.classList.add(clss.match(/[A-Za-z]+$/)[0].toLowerCase())
 }
 
+const stationsTbody = $("#stations-tbody");
+
 async function refreshPetrolStations() {
-    console.log("HERE")
+    const stations = await ping("getPetrolStations");
+    stationsTbody.empty();
+    let i = 0;
+
+    for (const station of stations) {
+        i++;
+        const tr = $("<tr>")
+
+        $("<td>", {
+            text: i,
+            appendTo: tr,
+        });
+
+        const content = $("<td>", {
+            text: station.name,
+            appendTo: tr,
+        });
+
+        $("<a>", {
+            text: "Pokaż",
+            class: "link-primary",
+            href: "#",
+            click: () => {
+                createPetrolStationCard(station).appendTo(content.empty());
+            }
+        }).wrap("<td>").parent().appendTo(tr);
+
+        stationsTbody.append(tr);
+    }
 }
 
-document.getElementById("find-petrol-stations").onclick = refreshPetrolStations;
+function createPetrolStationCard(station) {
+    const card = $(`<div class="card">`);
 
+    const cardHeader = $(`<div/>`, {
+        class: "card-header",
+        text: station.name,
+        appendTo: card,
+    });
+
+    ping("getPetrolStation", station.name).then(data => {
+        console.log(data);
+    });
+
+    return card;
+}
+
+
+$("#search-petrol-stations").click(refreshPetrolStations);
 setupUI();

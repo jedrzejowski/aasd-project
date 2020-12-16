@@ -144,7 +144,7 @@ public class AgentHelper {
         var reply = msg.createReply();
         reply.setPerformative(ACLMessage.INFORM);
         reply.setLanguage("application/json");
-        reply.setContent(obj.toJSON());
+        reply.setContent(obj.toString());
         agent.send(reply);
     }
 }

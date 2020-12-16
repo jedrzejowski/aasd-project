@@ -50,7 +50,8 @@ public class HttpPingServer {
     public void handle(String path, PingHandler handler) {
         this.server.createContext(path, httpExchange -> {
             try {
-                var res = handler.handle("").get();
+                var reqBody = new String(httpExchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                var res = handler.handle(reqBody).get();
 
                 httpExchange.sendResponseHeaders(200, res.getBytes().length);
 

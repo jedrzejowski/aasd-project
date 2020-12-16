@@ -1,13 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="pl">
 <head>
 
     <meta charset="UTF-8">
-    <title>Title</title>
-
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="boostrap.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
 
     <style>
         :not(body).useragent,
@@ -20,33 +19,49 @@
         }
     </style>
 
+    <title>Title</title>
+
 </head>
 <body>
 
-<div class="page-header">
+<div class="container">
     <h1>
-        <small>Agent name:</small>
+        <small class="text-muted">Agent name:</small>
         <span id="agent-name"></span>
-        <br>
-        <small>Agent class:</small>
+    </h1>
+    <h1>
+        <small class="text-muted">Agent class:</small>
         <span id="agent-class"></span>
     </h1>
 </div>
 
-
 <div class="container useragent">
-    <div class="toolbar">
-        <div>Stacje</div>
-        <button id="find-petrol-stations">Znajdz stacje</button>
+
+    <div class="navbar">
+        <span class="navbar-brand">Stacje</span>
+        <ul class="navbar-nav navbar-right">
+            <li>
+                <button class="btn btn-secondary" id="search-petrol-stations">Wyszukaj stacje paliwowe</button>
+            </li>
+        </ul>
     </div>
-    <table>
-        <tbody id="stations">
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Nazwa</th>
+            <th scope="col"></th>
+        </tr>
+        </thead>
+        <tbody id="stations-tbody">
 
         </tbody>
     </table>
+
 </div>
 
-
+<script src="jquery.js"></script>
 <script src="index.js"></script>
 
 </body>
