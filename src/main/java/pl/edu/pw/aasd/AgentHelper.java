@@ -1,5 +1,7 @@
 package pl.edu.pw.aasd;
 
+import com.google.gson.Gson;
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
@@ -10,21 +12,39 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import pl.edu.pw.aasd.data.PetrolPrice;
 import pl.edu.pw.aasd.promise.Promise;
 
 public class AgentHelper {
 
+    private static final Pattern serviceMatch = Pattern.compile("^([a-zA-Z]+):");
 
     public static void registerServices(Agent agent, String... serviceNames) {
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(agent.getAID());
 
+
         for (var serviceName : serviceNames) {
             ServiceDescription sd = new ServiceDescription();
-            sd.setType(serviceName);
-            sd.setName(serviceName);
+
+            if (serviceMatch.matcher(serviceName).find()) {
+                var vals = serviceName.split(":");
+
+                sd.setType(vals[0]);
+                sd.setName(vals[1]);
+
+                System.out.println(vals[1]);
+
+            } else {
+                sd.setType(serviceName);
+                sd.setName(agent.getName());
+            }
+
             dfd.addServices(sd);
         }
 
@@ -35,15 +55,37 @@ public class AgentHelper {
         }
     }
 
-    public static Promise<DFAgentDescription[]> findAllOfService(Agent agent, String serviceName) {
+    public static Promise<DFAgentDescription[]> findAllOf(Agent agent, String type, String name) {
 
         var template = new DFAgentDescription();
 
         var sd = new ServiceDescription();
-        sd.setType(serviceName);
+        sd.setType(type);
 
-        return new Promise<DFAgentDescription[]>()
-                .fulfillInAsync(() -> DFService.search(agent, template));
+        return new Promise<DFAgentDescription[]>().fulfillInAsync(() -> {
+            return Arrays.stream(
+                    DFService.search(agent, template)
+            ).filter(description -> {
+                if (name == null) {
+                    return true;
+                }
+
+                var iterator = description.getAllServices();
+
+                while (iterator.hasNext()) {
+                    var desc = (ServiceDescription) iterator.next();
+                    if (type.equals(desc.getType()) && name.equals(desc.getName())) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }).toArray(DFAgentDescription[]::new);
+        });
+    }
+
+    public static Promise<DFAgentDescription[]> findAllOf(Agent agent, String type) {
+        return findAllOf(agent, type, null);
     }
 
     public static Promise<ACLMessage> oneShotMessage(
@@ -61,6 +103,8 @@ public class AgentHelper {
             }
         });
         t.start();
+
+        System.out.println(agent);
 
         agent.addBehaviour(new SimpleBehaviour() {
             @Override
@@ -84,6 +128,33 @@ public class AgentHelper {
         agent.send(msg);
 
         return promise;
+    }
+
+    public static <T extends Jsonable> Promise<T> oneShotMessage(
+            Agent me,
+            AID agent,
+            String ontology,
+            Jsonable obj,
+            Class<T> cls
+    ) {
+        var gson = new Gson();
+
+        var receiveMsgTemplate = MessageTemplate.and(
+                MessageTemplate.MatchSender(agent),
+                MessageTemplate.MatchOntology(ontology)
+        );
+
+        var message = new ACLMessage(ACLMessage.REQUEST);
+        message.setOntology(ontology);
+        message.addReceiver(agent);
+
+        if (obj != null) {
+            message.setContent(obj.toString());
+            message.setLanguage("application/json");
+        }
+
+        return AgentHelper.oneShotMessage(me, message, receiveMsgTemplate)
+                .thenApply(msg -> gson.fromJson(msg.getContent(), cls));
     }
 
     public static void setupNewService(

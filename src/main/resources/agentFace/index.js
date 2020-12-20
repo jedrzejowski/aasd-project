@@ -1,7 +1,7 @@
 const agentName = document.getElementById("agent-name");
 const agentClass = document.getElementById("agent-class");
 
-async function ping(name, body) {
+async function myFetch(name, body) {
     const response = await fetch(`/${name}`, {
         method: body ? "POST" : "GET",
         body: body
@@ -12,20 +12,32 @@ async function ping(name, body) {
 
 async function setupUI() {
     const [name, clss] = await Promise.all([
-        ping("name"),
-        ping("class")
+        myFetch("name"),
+        myFetch("class")
     ]);
 
     agentName.innerText = name;
     agentClass.innerText = clss;
 
-    document.body.classList.add(clss.match(/[A-Za-z]+$/)[0].toLowerCase())
+    let className = clss.match(/[A-Za-z]+$/)[0];
+    $("body > ." + className).show();
+
+    $("<link/>", {
+        rel: "stylesheet",
+        href: className + ".css",
+        appendTo: document.head
+    });
+
+    $("<script/>", {
+        src: className + ".js",
+        appendTo: document.body
+    });
 }
 
 const stationsTbody = $("#stations-tbody");
 
 async function refreshPetrolStations() {
-    const stations = await ping("getPetrolStations");
+    const stations = await myFetch("getPetrolStations");
     stationsTbody.empty();
     let i = 0;
 
@@ -65,7 +77,7 @@ function createPetrolStationCard(station) {
         appendTo: card,
     });
 
-    ping("getPetrolStation", station.name).then(data => {
+    myFetch("getPetrolStation", station.name).then(data => {
         console.log(data);
     });
 

@@ -37,4 +37,5 @@ public class StationDescription extends Jsonable {
     public void setDescription(String description) {
         this.description = description;
     }
+
 }

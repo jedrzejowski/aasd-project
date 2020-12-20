@@ -7,10 +7,12 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import pl.edu.pw.aasd.agent.PetrolStationAgent;
 import pl.edu.pw.aasd.promise.Promise;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 public abstract class AgentWithFace extends Agent {
-    protected HttpPingServer httpPingServer;
+    private HttpPingServer httpPingServer;
 
     public AgentWithFace() {
         super();
@@ -22,16 +24,47 @@ public abstract class AgentWithFace extends Agent {
 
         this.httpPingServer = new HttpPingServer();
 
-        this.httpPingServer.handleFile("/", "index.html");
-        this.httpPingServer.handleFile("/index.html", "index.html");
-        this.httpPingServer.handleFile("/jquery.js", "jquery.js");
-        this.httpPingServer.handleFile("/index.js", "index.js");
-        // this.httpPingServer.handleFile("/boostrap.css", "boostrap.css");
+        this.httpPingServer.handleFile("/", "agentFace/index.html");
+        this.staticFilesSetup("/", "agentFace/");
 
         this.httpPingServer.handle("/name", body -> Promise.fulfilled(Jsonable.toJson(this.getAID().getName())));
         this.httpPingServer.handle("/class", body -> Promise.fulfilled(Jsonable.toJson(this.getClass().getName())));
 
-        httpPingServer.handle("/getPetrolStations", body -> {
+        this.setupPetrolStationCommon();
+
+        this.setupFace();
+
+        System.out.printf("Face of '%s' started at http://localhost:%d\n",
+                this.getName(), this.httpPingServer.getSocketNum());
+    }
+
+    void staticFilesSetup(String base, String path) {
+
+        try {
+            var uri = getClass().getClassLoader().getResource("agentFace").toURI();
+            var inodes = new File(uri).list();
+
+            assert inodes != null;
+
+            Arrays.stream(inodes).forEach(filename -> {
+                this.httpPingServer.handleFile(
+                        Paths.get(base, filename).toString(),
+                        Paths.get(path, filename).toString()
+                );
+            });
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected abstract void setupFace();
+
+    protected void faceHandle(String path, HttpPingServer.PingHandler handler) {
+        httpPingServer.handle(path, handler);
+    }
+
+    void setupPetrolStationCommon() {
+        httpPingServer.handle("/api/petrolStation/getAll", body -> {
             var descriptions = PetrolStationAgent.findAll(this).get();
 
             var names = Arrays.stream(descriptions)
@@ -47,7 +80,7 @@ public abstract class AgentWithFace extends Agent {
             return Promise.fulfilled(Jsonable.toJson(names));
         });
 
-        httpPingServer.handle("/getPetrolStation", petrolStationName -> {
+        httpPingServer.handle("/api/petrolStation/getP", petrolStationName -> {
             var petrolStation = new AID(petrolStationName, true);
             var response = new JsonObject();
 
@@ -60,12 +93,14 @@ public abstract class AgentWithFace extends Agent {
         });
 
 
-        this.setupPings();
+        httpPingServer.handle("/api/petrolStation/getDescription",
+                petrolStationName -> new Promise<String>().fulfillInAsync(() -> {
 
-        System.out.printf("Face of '%s' started at http://localhost:%d\n",
-                this.getName(), this.httpPingServer.getSocketNum());
+                    var petrolStation = new AID(petrolStationName, true);
+
+                    var petrolPrice = PetrolStationAgent.getStationDescription(this, petrolStation).get();
+
+                    return petrolPrice.toString();
+                }));
     }
-
-    protected abstract void setupPings();
-
 }

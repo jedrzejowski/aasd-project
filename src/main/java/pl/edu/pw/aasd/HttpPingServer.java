@@ -11,22 +11,16 @@ public class HttpPingServer {
     private int socketNum = 8000;
 
     public HttpPingServer() {
-        try {
-            InetSocketAddress socket = null;
-            while (socket == null) {
-                try {
-                    socket = new InetSocketAddress(this.socketNum);
-                } catch (Exception e) {
-                    this.socketNum++;
-                }
+        while (this.server == null) {
+            try {
+                var socket = new InetSocketAddress(this.socketNum);
+
+                this.server = HttpServer.create(socket, 0);
+                this.server.setExecutor(null);
+                this.server.start();
+            } catch (Exception e) {
+                this.socketNum++;
             }
-
-            this.server = HttpServer.create(socket, 0);
-            this.server.setExecutor(null);
-            this.server.start();
-
-        } catch (Exception ignored) {
-
         }
     }
 
@@ -59,6 +53,9 @@ public class HttpPingServer {
                 os.write(res.getBytes());
                 os.close();
             } catch (Throwable throwable) {
+                httpExchange.sendResponseHeaders(505, 0);
+                httpExchange.getResponseBody().close();
+
                 throwable.printStackTrace();
             }
         });
