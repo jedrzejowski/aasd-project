@@ -21,11 +21,15 @@ public class Jsonable {
         return gson.toJson(this);
     }
 
-    static public <T extends Jsonable> String toJson(Collection<T> list) {
-        return gson.toJson(list.stream().map(Jsonable::toString).toArray());
+    static public <T extends Jsonable> String toString(Collection<T> list) {
+        return gson.toJson(list.stream().map(Object::toString).toArray());
     }
 
-    static public <T extends Jsonable> String toJson(Object obj) {
+    static public <T extends Jsonable> String toString(Object obj) {
         return gson.toJson(obj);
+    }
+
+    static public JsonElement toJson(Object obj) {
+        return gson.toJsonTree(obj);
     }
 }

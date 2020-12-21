@@ -35,6 +35,7 @@ public class HttpPingServer {
     public void handleFile(String srvPath, String resPath) {
 
         this.handle(srvPath, body -> new Promise<String>().fulfillInAsync(() -> {
+            System.out.println(srvPath);
             var is = getClass().getClassLoader().getResourceAsStream(resPath);
             assert is != null;
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
@@ -53,7 +54,7 @@ public class HttpPingServer {
                 os.write(res.getBytes());
                 os.close();
             } catch (Throwable throwable) {
-                httpExchange.sendResponseHeaders(505, 0);
+                httpExchange.sendResponseHeaders(500, 0);
                 httpExchange.getResponseBody().close();
 
                 throwable.printStackTrace();

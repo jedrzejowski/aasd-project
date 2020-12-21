@@ -1,8 +1,8 @@
 package pl.edu.pw.aasd;
 
-import com.google.gson.Gson;
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.NotFoundException;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.DFService;
@@ -12,12 +12,14 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
+import java.net.ConnectException;
+import java.util.Date;
+
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import pl.edu.pw.aasd.data.PetrolPrice;
+import jade.proto.AchieveREInitiator;
 import pl.edu.pw.aasd.promise.Promise;
 
 public class AgentHelper {
@@ -37,8 +39,6 @@ public class AgentHelper {
 
                 sd.setType(vals[0]);
                 sd.setName(vals[1]);
-
-                System.out.println(vals[1]);
 
             } else {
                 sd.setType(serviceName);
@@ -88,76 +88,56 @@ public class AgentHelper {
         return findAllOf(agent, type, null);
     }
 
-    public static Promise<ACLMessage> oneShotMessage(
-            Agent agent,
-            ACLMessage msg,
-            MessageTemplate template
+    public static Promise<ACLMessage> requestInteraction(
+            Agent me,
+            ACLMessage msg
     ) {
         var promise = new Promise<ACLMessage>();
 
-        var t = new Thread(() -> {
-            try {
-                Thread.sleep(10000);
-                promise.fulfillExceptionally(new TimeoutException());
-            } catch (Exception ignored) {
+        me.addBehaviour(new AchieveREInitiator(me, msg) {
+            protected void handleInform(ACLMessage inform) {
+                promise.fulfill(inform);
             }
-        });
-        t.start();
 
-        System.out.println(agent);
+            protected void handleRefuse(ACLMessage refuse) {
+                promise.fulfillExceptionally(new RuntimeException());
+            }
 
-        agent.addBehaviour(new SimpleBehaviour() {
-            @Override
-            public void action() {
-                ACLMessage msg = myAgent.receive(template);
-
-                if (msg != null) {
-                    promise.fulfill(msg);
-
+            protected void handleFailure(ACLMessage failure) {
+                if (failure.getSender().equals(myAgent.getAMS())) {
+                    promise.fulfillExceptionally(new ConnectException());
                 } else {
-                    block();
+                    promise.fulfillExceptionally(new NotFoundException());
                 }
             }
-
-            @Override
-            public boolean done() {
-                return promise.isDone();
-            }
         });
-
-        agent.send(msg);
 
         return promise;
     }
 
-    public static <T extends Jsonable> Promise<T> oneShotMessage(
+    public static <T extends Jsonable> Promise<T> requestInteraction(
             Agent me,
             AID agent,
+            int performative,
             String ontology,
-            Jsonable obj,
+            Jsonable content,
             Class<T> cls
     ) {
-        var gson = new Gson();
+        var msg = new ACLMessage(performative);
+        msg.setOntology(ontology);
+        msg.addReceiver(agent);
+        msg.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
 
-        var receiveMsgTemplate = MessageTemplate.and(
-                MessageTemplate.MatchSender(agent),
-                MessageTemplate.MatchOntology(ontology)
-        );
-
-        var message = new ACLMessage(ACLMessage.REQUEST);
-        message.setOntology(ontology);
-        message.addReceiver(agent);
-
-        if (obj != null) {
-            message.setContent(obj.toString());
-            message.setLanguage("application/json");
+        if (content != null) {
+            msg.setContent(content.toString());
+            msg.setLanguage("application/json");
         }
 
-        return AgentHelper.oneShotMessage(me, message, receiveMsgTemplate)
-                .thenApply(msg -> gson.fromJson(msg.getContent(), cls));
+        return requestInteraction(me, msg)
+                .thenApply(response -> Jsonable.from(response.getContent(), cls));
     }
 
-    public static void setupNewService(
+    public static void setupRequestResponder(
             final Agent agent,
             final MessageTemplate template,
             final ServiceCallback callback
@@ -182,15 +162,18 @@ public class AgentHelper {
         });
     }
 
-    public static void setupNewService(
+    public static void setupRequestResponder(
             final Agent agent,
-            final String template,
+            final int performative,
+            final String ontology,
             final ServiceCallback callback
     ) {
-        setupNewService(agent, MessageTemplate.and(
-                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                MessageTemplate.MatchOntology(template)
-        ), callback);
+        var template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(performative),
+                MessageTemplate.MatchOntology(ontology)
+        );
+
+        setupRequestResponder(agent, template, callback);
     }
 
 
@@ -198,24 +181,28 @@ public class AgentHelper {
         void handle(ACLMessage msg);
     }
 
-
-    static public void sendConfirm(Agent agent, ACLMessage msg) {
-        ACLMessage reply = msg.createReply();
-        reply.setPerformative(ACLMessage.CONFIRM);
-        agent.send(reply);
-    }
-
-    static public void sendFailure(Agent agent, ACLMessage msg, Throwable err) {
-        ACLMessage reply = msg.createReply();
-        reply.setPerformative(ACLMessage.FAILURE);
-        agent.send(reply);
-    }
-
-    static public <T extends Jsonable> void sendInform(Agent agent, ACLMessage msg, T obj) {
+    static public <T extends Jsonable> void reply(Agent agent, ACLMessage msg, int performative, T obj) {
         var reply = msg.createReply();
-        reply.setPerformative(ACLMessage.INFORM);
-        reply.setLanguage("application/json");
-        reply.setContent(obj.toString());
+        reply.setPerformative(performative);
+
+        if (obj != null) {
+            reply.setLanguage("application/json");
+            reply.setContent(obj.toString());
+        }
+
         agent.send(reply);
     }
+
+    static public <T extends Jsonable> void replyInform(Agent agent, ACLMessage msg, T obj) {
+        reply(agent, msg, ACLMessage.INFORM, obj);
+    }
+
+    static public <T extends Jsonable> void replyConfirm(Agent agent, ACLMessage msg, T obj) {
+        reply(agent, msg, ACLMessage.CONFIRM, obj);
+    }
+
+    static public void replyFailure(Agent agent, ACLMessage msg, Throwable obj) {
+        reply(agent, msg, ACLMessage.FAILURE, null);
+    }
+
 }

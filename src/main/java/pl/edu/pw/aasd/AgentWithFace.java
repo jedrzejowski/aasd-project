@@ -1,6 +1,8 @@
 package pl.edu.pw.aasd;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -24,11 +26,11 @@ public abstract class AgentWithFace extends Agent {
 
         this.httpPingServer = new HttpPingServer();
 
-        this.httpPingServer.handleFile("/", "agentFace/index.html");
+        this.httpPingServer.handleFile("/", "agentFace/" + this.getClass().getSimpleName() + ".html");
         this.staticFilesSetup("/", "agentFace/");
 
-        this.httpPingServer.handle("/name", body -> Promise.fulfilled(Jsonable.toJson(this.getAID().getName())));
-        this.httpPingServer.handle("/class", body -> Promise.fulfilled(Jsonable.toJson(this.getClass().getName())));
+        this.httpPingServer.handle("/name", body -> Promise.fulfilled(Jsonable.toString(this.getAID().getName())));
+        this.httpPingServer.handle("/class", body -> Promise.fulfilled(Jsonable.toString(this.getClass().getName())));
 
         this.setupPetrolStationCommon();
 
@@ -59,8 +61,16 @@ public abstract class AgentWithFace extends Agent {
 
     protected abstract void setupFace();
 
-    protected void faceHandle(String path, HttpPingServer.PingHandler handler) {
-        httpPingServer.handle(path, handler);
+    public interface FacePingHandler {
+        JsonElement handle(JsonElement body) throws Throwable;
+    }
+
+    protected void faceHandle(String path, FacePingHandler handler) {
+        httpPingServer.handle(path, body -> {
+            JsonElement parsed = body != null ? JsonParser.parseString(body) : null;
+            var response = handler.handle(parsed);
+            return Promise.fulfilled(response != null ? response.toString() : "null");
+        });
     }
 
     void setupPetrolStationCommon() {
@@ -77,14 +87,14 @@ public abstract class AgentWithFace extends Agent {
                     })
                     .toArray();
 
-            return Promise.fulfilled(Jsonable.toJson(names));
+            return Promise.fulfilled(Jsonable.toString(names));
         });
 
-        httpPingServer.handle("/api/petrolStation/getP", petrolStationName -> {
+        httpPingServer.handle("/api/petrolStation/currentPetrolPrice", petrolStationName -> {
             var petrolStation = new AID(petrolStationName, true);
             var response = new JsonObject();
 
-            var petrolPrice = PetrolStationAgent.getCurrentPrice(this, petrolStation).get();
+            var petrolPrice = PetrolStationAgent.getCurrentPetrolPrice(this, petrolStation).get();
 
             response.addProperty("name", petrolStationName);
             response.add("petrolPrice", petrolPrice.toJson());
@@ -93,7 +103,7 @@ public abstract class AgentWithFace extends Agent {
         });
 
 
-        httpPingServer.handle("/api/petrolStation/getDescription",
+        httpPingServer.handle("/api/petrolStation/stationDescription",
                 petrolStationName -> new Promise<String>().fulfillInAsync(() -> {
 
                     var petrolStation = new AID(petrolStationName, true);

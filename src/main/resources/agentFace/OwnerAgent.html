@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pl">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="OwnerAgent.css">
+
+    <title>Title</title>
+
+</head>
+<body>
+
+<div class="container" style="display: inherit;">
+    <h1>
+        <small class="text-muted">Agent name:</small>
+        <span id="agent-name"></span>
+    </h1>
+    <h1>
+        <small class="text-muted">Agent class:</small>
+        <span id="agent-class"></span>
+    </h1>
+</div>
+
+
+<div class="container">
+    <div class="navbar">
+        <span class="navbar-brand">Stacje</span>
+        <ul class="navbar-nav navbar-right">
+            <li>
+                <button class="btn btn-secondary" id="searchMyPetrolStationButton">
+                    Wyszukaj moje stacje paliwowe
+                </button>
+                <button class="btn btn-primary" id="addPetrolStationShowModal">
+                    Dodaj nową stację
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Nazwa</th>
+            <th scope="col"></th>
+        </tr>
+        </thead>
+        <tbody data-id="owned-stations-search-result">
+
+        </tbody>
+    </table>
+
+</div>
+
+<div class="modal fade" id="addPetrolStationModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Dodaj nową stację</h5>
+            </div>
+
+            <div class="modal-body">
+                <label class="form-label">Identyfikator stacji</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="addPetrolStationUniqueName">
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="addPetrolStationAccept">Zapisz</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="jquery.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW"
+        crossorigin="anonymous"></script>
+
+<script src="lib.js"></script>
+<script src="OwnerAgent.js"></script>
+
+</body>
+</html>

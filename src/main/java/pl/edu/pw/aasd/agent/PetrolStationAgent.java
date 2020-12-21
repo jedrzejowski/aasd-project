@@ -5,9 +5,7 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
 import pl.edu.pw.aasd.AgentHelper;
-import pl.edu.pw.aasd.AgentWithFace;
 import pl.edu.pw.aasd.data.PetrolPrice;
 import pl.edu.pw.aasd.data.StationDescription;
 import pl.edu.pw.aasd.data.UserVote;
@@ -16,51 +14,66 @@ import pl.edu.pw.aasd.promise.Promise;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PetrolStationAgent extends AgentWithFace {
+public class PetrolStationAgent extends Agent {
 
     String uniqueName = null;
+    String uniqueNameOfOwner = null;
     StationDescription stationDescription = null;
+    PetrolPrice currentPetrolPrice = null;
     Collection<UserVote> votes = new ArrayList<>();
 
     @Override
     protected void setup() {
-        //TODO lepiej to zrobić
         this.uniqueName = getLocalName();
+        this.uniqueNameOfOwner = this.getArguments()[0].toString();
 
-        var sd = new StationDescription();
-        sd.setCommonName("KK");
-        this.setStationDescription(sd);
 
-        AgentHelper.registerServices(this, "petrolStation:" + uniqueName);
+        AgentHelper.registerServices(this,
+                "petrolStation",
+                "petrolStation:" + uniqueName
+        );
 
-        AgentHelper.setupNewService(this, "checkPrice", msg -> {
-            AgentHelper.sendInform(this, msg, getCurrentPrice());
-        });
+        AgentHelper.setupRequestResponder(this,
+                ACLMessage.QUERY_REF, "currentPetrolPrice",
+                msg -> AgentHelper.reply(this, msg, ACLMessage.INFORM, this.getCurrentPetrolPrice())
+        );
 
-        AgentHelper.setupNewService(this, "getStationDescription", msg -> {
-            AgentHelper.sendInform(this, msg, this.getStationDescription());
-        });
+        AgentHelper.setupRequestResponder(this,
+                ACLMessage.QUERY_REF, "stationDescription",
+                msg -> AgentHelper.replyInform(this, msg, this.getStationDescription())
+        );
 
-        AgentHelper.setupNewService(this, "setStationDescription", msg -> {
-            var stationDescription = StationDescription.from(msg.getContent());
+        AgentHelper.setupRequestResponder(this,
+                ACLMessage.REQUEST,
+                "setStationDescription", msg -> {
+                    var stationDescription = StationDescription.from(msg.getContent());
 
-            OwnerAgent.authOwner(msg.getSender())
-                    .thenAccept((__) -> this.setStationDescription(stationDescription))
-                    .thenAccept((__) -> AgentHelper.sendConfirm(this, msg))
-                    .onError(err -> AgentHelper.sendFailure(this, msg, err));
-        });
+                    OwnerAgent.authOwner(msg.getSender())
+                            .thenAccept((__) -> this.setStationDescription(stationDescription))
+                            .thenAccept((__) -> AgentHelper.replyConfirm(this, msg, null))
+                            .onError(err -> AgentHelper.replyFailure(this, msg, err));
+                }
+        );
 
-        AgentHelper.setupNewService(this, "setPrice", msg -> {
+        AgentHelper.setupRequestResponder(this,
+                ACLMessage.PROPAGATE, "setPrice",
+                msg -> {
 
-        });
+                }
+        );
 
-        AgentHelper.setupNewService(this, "addPriceProposition", msg -> {
+        AgentHelper.setupRequestResponder(this,
+                ACLMessage.PROPAGATE, "addPriceProposition",
+                msg -> {
 
-        });
+                }
+        );
 
-        AgentHelper.setupNewService(this, "addVote", msg -> {
+        AgentHelper.setupRequestResponder(this,
+                ACLMessage.PROPAGATE, "addVote", msg -> {
 
-        });
+                }
+        );
 
 
         this.createPylon();
@@ -70,11 +83,22 @@ public class PetrolStationAgent extends AgentWithFace {
         return uniqueName;
     }
 
-    public PetrolPrice getCurrentPrice() {
-        var price = new PetrolPrice();
-        price.setPb98((int) Math.floor(Math.random() * 10000) + "");
-        price.setPb95((int) Math.floor(Math.random() * 10000) + "");
-        return price;
+    //region currentPetrolPrice
+
+    public PetrolPrice getCurrentPetrolPrice() {
+        return currentPetrolPrice;
+    }
+
+    private void setCurrentPetrolPrice(PetrolPrice currentPetrolPrice) {
+        this.currentPetrolPrice = currentPetrolPrice;
+    }
+
+    public static Promise<PetrolPrice> getCurrentPetrolPrice(Agent agent, AID petrol) {
+        return AgentHelper.requestInteraction(
+                agent, petrol,
+                ACLMessage.QUERY_REF, "currentPetrolPrice",
+                null, PetrolPrice.class
+        );
     }
 
     //region stationDescription
@@ -88,7 +112,7 @@ public class PetrolStationAgent extends AgentWithFace {
     }
 
     public static Promise<StationDescription> getStationDescription(Agent me, AID station) {
-        return AgentHelper.oneShotMessage(me, station, "getStationDescription", null, StationDescription.class);
+        return AgentHelper.requestInteraction(me, station, ACLMessage.QUERY_REF, "getStationDescription", null, StationDescription.class);
     }
 
     //endregion
@@ -100,23 +124,6 @@ public class PetrolStationAgent extends AgentWithFace {
     public static Promise<DFAgentDescription[]> findByUniqueName(Agent agent, String uniqueName) {
         return AgentHelper.findAllOf(agent, "petrolStation", uniqueName);
     }
-
-    public static Promise<PetrolPrice> getCurrentPrice(Agent agent, AID petrol) {
-        var gson = new Gson();
-
-        var receiveMsgTemplate = MessageTemplate.and(
-                MessageTemplate.MatchSender(petrol),
-                MessageTemplate.MatchOntology("priceReply")
-        );
-
-        var message = new ACLMessage(ACLMessage.REQUEST);
-        message.setOntology("checkPrice");
-        message.addReceiver(petrol);
-
-        return AgentHelper.oneShotMessage(agent, message, receiveMsgTemplate)
-                .thenApply(msg -> gson.fromJson(msg.getContent(), PetrolPrice.class));
-    }
-
 
     /**
      * Każda stacja tworzy agenta dla pylonu
@@ -141,8 +148,4 @@ public class PetrolStationAgent extends AgentWithFace {
         }
     }
 
-    @Override
-    protected void setupFace() {
-
-    }
 }

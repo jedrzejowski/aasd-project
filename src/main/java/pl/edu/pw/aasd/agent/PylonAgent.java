@@ -1,8 +1,6 @@
 package pl.edu.pw.aasd.agent;
 
 import jade.core.AID;
-import jade.core.Agent;
-import jade.core.NotFoundException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import pl.edu.pw.aasd.AgentHelper;
@@ -28,7 +26,7 @@ public class PylonAgent extends AgentWithFace {
         this.stationUniqueName = (String) args[0];
 
         // Aktualizacja ceny
-        AgentHelper.setupNewService(this, MessageTemplate.and(
+        AgentHelper.setupRequestResponder(this, MessageTemplate.and(
                 MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
                 MessageTemplate.MatchOntology("setPrice")
         ), msg -> {
@@ -77,9 +75,9 @@ public class PylonAgent extends AgentWithFace {
 
     @Override
     protected void setupFace() {
-        this.faceHandle("/api/pylon/stationUniqueName", body -> Promise.fulfilled(this.getStationUniqueName()));
+//        this.faceHandle("/api/pylon/stationUniqueName", body -> Promise.fulfilled(this.getStationUniqueName()));
 
-        this.faceHandle("/api/pylon/stationDescription", body -> this.getPetrolStationDescription().thenApply(Jsonable::toString));
+//        this.faceHandle("/api/pylon/stationDescription", body -> this.getPetrolStationDescription().thenApply(Jsonable::toString));
 
     }
 
