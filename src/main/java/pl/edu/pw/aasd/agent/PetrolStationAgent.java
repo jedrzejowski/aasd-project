@@ -92,7 +92,7 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
     }
 
 
-    public static Promise<DFAgentDescription[]> findAll(Agent agent) {
+    public static DFAgentDescription[] findAll(Agent agent) {
         return AgentHelper.findAllOf(agent, "petrolStation");
     }
 

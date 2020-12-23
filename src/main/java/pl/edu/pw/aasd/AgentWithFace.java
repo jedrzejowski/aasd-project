@@ -71,7 +71,7 @@ public abstract class AgentWithFace<Data extends Jsonable> extends AgentWithData
         //region petrolStation
 
         handleHttpApi("/api/petrolStation/getAll", body -> {
-            var descriptions = PetrolStationAgent.findAll(this).get();
+            var descriptions = PetrolStationAgent.findAll(this);
 
             var names = Arrays.stream(descriptions)
                     .map(DFAgentDescription::getName)

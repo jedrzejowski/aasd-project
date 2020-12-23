@@ -174,17 +174,17 @@ public class Promise<T> extends PromiseSupport<T> {
     }
 
 
-    public static <T> Promise<ValueOfException<T>[]> all(Promise<T>[] promises) {
-        var promise = new Promise<ValueOfException<T>[]>();
+    public static <T> Promise<ValueOrException<T>[]> all(Promise<T>[] promises) {
+        var promise = new Promise<ValueOrException<T>[]>();
 
-        var array = new ValueOfException[promises.length];
+        var array = new ValueOrException[promises.length];
         AtomicInteger done = new AtomicInteger();
 
         for (int i = 0; i < promises.length; i++) {
             final var my_i = i;
             promises[i].thenAccept(obj -> {
                 synchronized (array) {
-                    array[my_i] = ValueOfException.value(obj);
+                    array[my_i] = ValueOrException.value(obj);
                     done.getAndIncrement();
 
                     if (done.get() == promises.length) {
@@ -195,7 +195,7 @@ public class Promise<T> extends PromiseSupport<T> {
 
             promises[i].onError(throwable -> {
                 synchronized (array) {
-                    array[my_i] = ValueOfException.exception(throwable);
+                    array[my_i] = ValueOrException.exception(throwable);
                     done.getAndIncrement();
 
                     if (done.get() == promises.length) {
@@ -208,7 +208,7 @@ public class Promise<T> extends PromiseSupport<T> {
         return promise;
     }
 
-    public static <T> Promise<ValueOfException<T>[]> all(Stream<Promise<T>> promises) {
+    public static <T> Promise<ValueOrException<T>[]> all(Stream<Promise<T>> promises) {
         return all((Promise[]) promises.toArray());
     }
 

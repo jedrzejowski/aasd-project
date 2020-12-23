@@ -1,20 +1,20 @@
 package pl.edu.pw.aasd.promise;
 
-public final class ValueOfException<V> {
+public final class ValueOrException<V> {
     final Object object;
     final boolean is_value;
 
-    ValueOfException(Object object, boolean value) {
+    ValueOrException(Object object, boolean value) {
         this.object = object;
         this.is_value = value;
     }
 
-    static <V> ValueOfException<V> value(V value) {
-        return new ValueOfException<V>(value, true);
+    static <V> ValueOrException<V> value(V value) {
+        return new ValueOrException<V>(value, true);
     }
 
-    static <V, E extends Throwable> ValueOfException<V> exception(E exception) {
-        return new ValueOfException<V>(exception, false);
+    static <V, E extends Throwable> ValueOrException<V> exception(E exception) {
+        return new ValueOrException<V>(exception, false);
     }
 
     public boolean isValue() {

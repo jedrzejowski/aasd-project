@@ -4,7 +4,6 @@ import com.google.gson.JsonElement;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.NotFoundException;
-import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.*;
 import jade.domain.FIPAException;
@@ -14,9 +13,7 @@ import jade.lang.acl.MessageTemplate;
 import java.net.ConnectException;
 import java.util.Date;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 import jade.proto.AchieveREInitiator;
@@ -59,7 +56,7 @@ public class AgentHelper {
         return sd;
     }
 
-    public static DFAgentDescription[] findAllOf2(Agent agent, String... serviceNames) {
+    public static DFAgentDescription[] findAllOf(Agent agent, String... serviceNames) {
 
         DFAgentDescription template = new DFAgentDescription();
         for (var serviceName : serviceNames) {
@@ -75,48 +72,13 @@ public class AgentHelper {
 
     public static Promise<DFAgentDescription> findOne(Agent agent, String... serviceNames) {
         return new Promise<DFAgentDescription>().fulfillInAsync(() -> {
-            var desc = findAllOf2(agent, serviceNames);
+            var desc = findAllOf(agent, serviceNames);
             if (desc.length == 1) {
                 return desc[0];
             } else {
                 throw new NotFoundException();
             }
         });
-    }
-
-    public static Promise<DFAgentDescription[]> findAllOf(Agent agent, String type, String name) {
-
-        var template = new DFAgentDescription();
-
-        var sd = new ServiceDescription();
-        sd.setType(type);
-
-        template.addServices(sd);
-
-        return new Promise<DFAgentDescription[]>().fulfillInAsync(() -> {
-            return Arrays.stream(
-                    DFService.search(agent, template)
-            ).filter(description -> {
-                if (name == null) {
-                    return true;
-                }
-
-                var iterator = description.getAllServices();
-
-                while (iterator.hasNext()) {
-                    var desc = (ServiceDescription) iterator.next();
-                    if (type.equals(desc.getType()) && name.equals(desc.getName())) {
-                        return true;
-                    }
-                }
-
-                return false;
-            }).toArray(DFAgentDescription[]::new);
-        });
-    }
-
-    public static Promise<DFAgentDescription[]> findAllOf(Agent agent, String type) {
-        return findAllOf(agent, type, null);
     }
 
     public static Promise<ACLMessage> requestInteraction(
@@ -243,18 +205,6 @@ public class AgentHelper {
         }
 
         agent.send(reply);
-    }
-
-    static public <T extends Jsonable> void replyInform(Agent agent, ACLMessage msg, T obj) {
-        reply(agent, msg, ACLMessage.INFORM, obj);
-    }
-
-    static public <T extends Jsonable> void replyConfirm(Agent agent, ACLMessage msg, T obj) {
-        reply(agent, msg, ACLMessage.CONFIRM, obj);
-    }
-
-    static public void replyFailure(Agent agent, ACLMessage msg, Throwable obj) {
-        reply(agent, msg, ACLMessage.FAILURE, null);
     }
 
 }
