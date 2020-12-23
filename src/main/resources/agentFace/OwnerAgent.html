@@ -32,7 +32,7 @@
         <span class="navbar-brand">Stacje</span>
         <ul class="navbar-nav navbar-right">
             <li>
-                <button class="btn btn-secondary" id="searchMyPetrolStationButton">
+                <button class="btn btn-secondary" id="ownedPetrolStationsSearchBtn">
                     Wyszukaj moje stacje paliwowe
                 </button>
                 <button class="btn btn-primary" id="addPetrolStationShowModal">
@@ -46,11 +46,11 @@
         <thead>
         <tr>
             <th scope="col">#</th>
-            <th scope="col">Nazwa</th>
-            <th scope="col"></th>
+            <th scope="col">Unikalna Nazwa</th>
+            <th scope="col">Status</th>
         </tr>
         </thead>
-        <tbody data-id="owned-stations-search-result">
+        <tbody id="ownedPetrolStationsTbody">
 
         </tbody>
     </table>

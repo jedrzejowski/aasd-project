@@ -1,11 +1,16 @@
 package pl.edu.pw.aasd.agent;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.lang.acl.ACLMessage;
 import pl.edu.pw.aasd.AgentHelper;
+import pl.edu.pw.aasd.AgentWithFace;
+import pl.edu.pw.aasd.Boot;
+import pl.edu.pw.aasd.Jsonable;
 import pl.edu.pw.aasd.data.PetrolPrice;
 import pl.edu.pw.aasd.data.StationDescription;
 import pl.edu.pw.aasd.data.UserVote;
@@ -14,83 +19,50 @@ import pl.edu.pw.aasd.promise.Promise;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PetrolStationAgent extends Agent {
+public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData> {
 
-    String uniqueName = null;
-    String uniqueNameOfOwner = null;
-    StationDescription stationDescription = null;
-    PetrolPrice currentPetrolPrice = null;
-    Collection<UserVote> votes = new ArrayList<>();
+    static class MyData extends Jsonable {
+        StationDescription stationDescription = null;
+        PetrolPrice currentPetrolPrice = null;
+        Collection<UserVote> votes = new ArrayList<>();
+    }
+
+    @Override
+    protected MyData parseData(String name) {
+        return name == null ? new MyData() : Jsonable.from(name, MyData.class);
+    }
 
     @Override
     protected void setup() {
-        this.uniqueName = getLocalName();
-        this.uniqueNameOfOwner = this.getArguments()[0].toString();
-
+        super.setup();
 
         AgentHelper.registerServices(this,
-                "petrolStation",
-                "petrolStation:" + uniqueName
+                "petrolStation:" + this.getUniqueName()
         );
 
         AgentHelper.setupRequestResponder(this,
                 ACLMessage.QUERY_REF, "currentPetrolPrice",
-                msg -> AgentHelper.reply(this, msg, ACLMessage.INFORM, this.getCurrentPetrolPrice())
+                msg -> Promise.fulfilled(this.data.currentPetrolPrice.toJson())
         );
 
         AgentHelper.setupRequestResponder(this,
                 ACLMessage.QUERY_REF, "stationDescription",
-                msg -> AgentHelper.replyInform(this, msg, this.getStationDescription())
+                msg -> Promise.fulfilled(this.data.stationDescription.toJson())
         );
 
         AgentHelper.setupRequestResponder(this,
-                ACLMessage.REQUEST,
-                "setStationDescription", msg -> {
+                ACLMessage.REQUEST, "stationDescription",
+                msg -> new Promise<JsonElement>().fulfillInAsync(() -> {
                     var stationDescription = StationDescription.from(msg.getContent());
-
-                    OwnerAgent.authOwner(msg.getSender())
-                            .thenAccept((__) -> this.setStationDescription(stationDescription))
-                            .thenAccept((__) -> AgentHelper.replyConfirm(this, msg, null))
-                            .onError(err -> AgentHelper.replyFailure(this, msg, err));
-                }
+                    OwnerAgent.authOwner(msg.getSender()).get();
+                    this.data.stationDescription = stationDescription;
+                    return new JsonPrimitive(true);
+                })
         );
 
-        AgentHelper.setupRequestResponder(this,
-                ACLMessage.PROPAGATE, "setPrice",
-                msg -> {
-
-                }
-        );
-
-        AgentHelper.setupRequestResponder(this,
-                ACLMessage.PROPAGATE, "addPriceProposition",
-                msg -> {
-
-                }
-        );
-
-        AgentHelper.setupRequestResponder(this,
-                ACLMessage.PROPAGATE, "addVote", msg -> {
-
-                }
-        );
-
-
-        this.createPylon();
-    }
-
-    public String getUniqueName() {
-        return uniqueName;
-    }
-
-    //region currentPetrolPrice
-
-    public PetrolPrice getCurrentPetrolPrice() {
-        return currentPetrolPrice;
-    }
-
-    private void setCurrentPetrolPrice(PetrolPrice currentPetrolPrice) {
-        this.currentPetrolPrice = currentPetrolPrice;
+        if (Boot.DEBUG_CREATE_CHILDREN) {
+            this.createPylon();
+        }
     }
 
     public static Promise<PetrolPrice> getCurrentPetrolPrice(Agent agent, AID petrol) {
@@ -101,51 +73,37 @@ public class PetrolStationAgent extends Agent {
         );
     }
 
-    //region stationDescription
-
-    public StationDescription getStationDescription() {
-        return stationDescription;
-    }
-
-    public void setStationDescription(StationDescription stationDescription) {
-        this.stationDescription = stationDescription;
-    }
-
     public static Promise<StationDescription> getStationDescription(Agent me, AID station) {
-        return AgentHelper.requestInteraction(me, station, ACLMessage.QUERY_REF, "getStationDescription", null, StationDescription.class);
+        return AgentHelper.requestInteraction(
+                me, station,
+                ACLMessage.QUERY_REF, "getStationDescription",
+                null, StationDescription.class);
     }
 
-    //endregion
 
     public static Promise<DFAgentDescription[]> findAll(Agent agent) {
         return AgentHelper.findAllOf(agent, "petrolStation");
     }
 
-    public static Promise<DFAgentDescription[]> findByUniqueName(Agent agent, String uniqueName) {
-        return AgentHelper.findAllOf(agent, "petrolStation", uniqueName);
+    public static Promise<DFAgentDescription> findByUniqueName(Agent agent, String uniqueName) {
+        return AgentHelper.findOne(agent, "petrolStation:" + uniqueName);
     }
 
-    /**
-     * Każda stacja tworzy agenta dla pylonu
-     * Wiem, że to z punktu działania systemu jest głupie, no ale nia mam lepszego pomysłu
-     */
-    private void createPylon() {
-        //TODO dodać sprawdzanie czy istnieje już agent pylona
-        try {
+    private Promise<Void> createPylon() {
+        return new Promise<Void>().fulfillInAsync(() -> {
+
             var cc = this.getContainerController();
-            Object[] args = {this.uniqueName};
 
             var pylonAgent = cc.createNewAgent(
                     "PylonOf" + this.getLocalName(),
                     "pl.edu.pw.aasd.agent.PylonAgent",
-                    args
+                    new Object[]{
+                            this.getUniqueName()
+                    }
             );
 
             pylonAgent.start();
-            //TODO dodać stop
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+            return null;
+        });
     }
-
 }

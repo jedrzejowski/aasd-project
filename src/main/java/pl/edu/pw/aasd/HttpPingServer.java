@@ -29,24 +29,23 @@ public class HttpPingServer {
     }
 
     public interface PingHandler {
-        Promise<String> handle(String body) throws Throwable;
+        String handle(String body) throws Throwable;
     }
 
     public void handleFile(String srvPath, String resPath) {
 
-        this.handle(srvPath, body -> new Promise<String>().fulfillInAsync(() -> {
-            System.out.println(srvPath);
+        this.handle(srvPath, body -> {
             var is = getClass().getClassLoader().getResourceAsStream(resPath);
             assert is != null;
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        }));
+        });
     }
 
     public void handle(String path, PingHandler handler) {
         this.server.createContext(path, httpExchange -> {
             try {
                 var reqBody = new String(httpExchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-                var res = handler.handle(reqBody).get();
+                var res = handler.handle(reqBody);
 
                 httpExchange.sendResponseHeaders(200, res.getBytes().length);
 

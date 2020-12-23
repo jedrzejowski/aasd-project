@@ -1,10 +1,11 @@
 package pl.edu.pw.aasd.agent;
 
-import com.google.gson.JsonParser;
+import com.google.gson.JsonObject;
 import jade.core.AID;
 import jade.wrapper.StaleProxyException;
 import pl.edu.pw.aasd.AgentHelper;
 import pl.edu.pw.aasd.AgentWithFace;
+import pl.edu.pw.aasd.Boot;
 import pl.edu.pw.aasd.Jsonable;
 import pl.edu.pw.aasd.promise.Promise;
 
@@ -12,66 +13,72 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 
-public class OwnerAgent extends AgentWithFace {
+public class OwnerAgent extends AgentWithFace<OwnerAgent.MyData> {
 
-    String uniqueName = null;
-    Collection<String> ownedPetrolStation = new ArrayList<>();
+    static class MyData extends Jsonable {
+        Collection<String> ownedPetrolStation = new ArrayList<>();
+    }
+
+    @Override
+    protected MyData parseData(String name) {
+        return name == null ? new MyData() : Jsonable.from(name, MyData.class);
+    }
 
     @Override
     protected void setup() {
-        this.uniqueName = this.getLocalName();
+        super.setup();
 
         AgentHelper.registerServices(this,
-                "OwnerAgent",
                 "OwnerAgent:" + this.getUniqueName()
         );
-    }
 
-    @Override
-    protected void setupFace() {
-        setupFaceOwnedPetrolStation();
-    }
+        this.handleHttpApi("/api/this/ownedPetrolStation",
+                body -> Jsonable.toJson(this.data.ownedPetrolStation));
 
-    public String getUniqueName() {
-        return uniqueName;
-    }
-
-    //region ownedPetrolStation
-
-    public Collection<String> getOwnedPetrolStation() {
-        return ownedPetrolStation;
-    }
-
-    private void setupFaceOwnedPetrolStation() {
-
-        this.faceHandle("/api/this/ownedPetrolStation", body -> {
-            var owned = this.getOwnedPetrolStation();
-            return Jsonable.toJson(owned);
-        });
-
-        this.faceHandle("/api/this/createPetrolStation", body -> {
+        this.handleHttpApi("/api/this/createPetrolStation", body -> {
             var request = body.getAsJsonObject();
             var uniqueName = request.get("uniqueName").getAsString();
-            createPetrolStation(uniqueName);
-            return null;
+            createPetrolStation(uniqueName).get();
+            return new JsonObject();
         });
 
+        if (Boot.DEBUG_CREATE_CHILDREN) {
+            this.data.ownedPetrolStation.forEach(this::startPetrolStation);
+        }
     }
 
-    //endregion
+    private Promise<Void> createPetrolStation(String uniqueName) {
+        return new Promise<Void>().fulfillInAsync(() -> {
+            //TODO sprawdzić czy dana stacja istnieje
 
-    private void createPetrolStation(String uniqueName) throws StaleProxyException {
-        //TODO sprawdzić czy dana stacja istnieje
+            var cc = this.getContainerController();
 
-        var cc = this.getContainerController();
+            var ac = cc.createNewAgent(
+                    uniqueName,
+                    PetrolStationAgent.class.getName(),
+                    new Object[]{this.getUniqueName()}
+            );
+            ac.start();
 
-        cc.createNewAgent(
-                uniqueName,
-                PetrolStationAgent.class.getName(),
-                new Object[]{this.uniqueName}
-        ).start();
+            data.ownedPetrolStation.add(uniqueName);
+            return null;
+        });
+    }
 
-        ownedPetrolStation.add(uniqueName);
+    private Promise<Void> startPetrolStation(String uniqueName) {
+        return new Promise<Void>().fulfillInAsync(() -> {
+            //TODO sprawdzić czy dana stacja istnieje
+
+            var cc = this.getContainerController();
+
+            var ac = cc.createNewAgent(
+                    uniqueName,
+                    PetrolStationAgent.class.getName(),
+                    new Object[]{this.getUniqueName()}
+            );
+            ac.start();
+            return null;
+        });
     }
 
     public static Promise<Void> authOwner(final AID maybe_owner) {

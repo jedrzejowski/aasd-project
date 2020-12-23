@@ -10,6 +10,22 @@ async function myFetch(name, body = undefined) {
     return response.json()
 }
 
+function makeAlert({text, type = "primary"}) {
+    $("<div/>", {
+        class: `alert alert-${type}`,
+        text,
+        role: "alert",
+        append: [
+            $("<button>", {
+                type: "button",
+                class: "btn-close",
+                "data-bs-dismiss": "alert",
+            })
+        ],
+        appendTo: "body"
+    }).alert();
+}
+
 $(async () => {
     const [name, clss] = await Promise.all([
         myFetch("name"),

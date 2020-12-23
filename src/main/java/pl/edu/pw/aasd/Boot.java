@@ -1,8 +1,8 @@
 package pl.edu.pw.aasd;
 
-import java.util.ArrayList;
-
 public class Boot {
+
+    static public boolean DEBUG_CREATE_CHILDREN = true;
 
     public static void main(String args[]) {
 //        var args = new ArrayList<String>();

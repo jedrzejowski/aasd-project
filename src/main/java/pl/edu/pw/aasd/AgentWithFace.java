@@ -3,38 +3,32 @@ package pl.edu.pw.aasd;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import jade.core.AID;
-import jade.core.Agent;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import pl.edu.pw.aasd.agent.PetrolStationAgent;
-import pl.edu.pw.aasd.promise.Promise;
 
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
-public abstract class AgentWithFace extends Agent {
+public abstract class AgentWithFace<Data extends Jsonable> extends AgentWithData<Data> {
     private HttpPingServer httpPingServer;
 
-    public AgentWithFace() {
-        super();
 
-        SafeThread.run(this::basicSetup, 100);
-    }
-
-    void basicSetup() {
+    @Override
+    protected void setup() {
+        super.setup();
 
         this.httpPingServer = new HttpPingServer();
 
         this.httpPingServer.handleFile("/", "agentFace/" + this.getClass().getSimpleName() + ".html");
         this.staticFilesSetup("/", "agentFace/");
 
-        this.httpPingServer.handle("/name", body -> Promise.fulfilled(Jsonable.toString(this.getAID().getName())));
-        this.httpPingServer.handle("/class", body -> Promise.fulfilled(Jsonable.toString(this.getClass().getName())));
+        handleHttpApi("/name", body -> new JsonPrimitive(this.getAID().getName()));
+        handleHttpApi("/class", body -> new JsonPrimitive(this.getClass().getName()));
 
         this.setupPetrolStationCommon();
-
-        this.setupFace();
 
         System.out.printf("Face of '%s' started at http://localhost:%d\n",
                 this.getName(), this.httpPingServer.getSocketNum());
@@ -59,22 +53,23 @@ public abstract class AgentWithFace extends Agent {
         }
     }
 
-    protected abstract void setupFace();
-
-    public interface FacePingHandler {
+    public interface HttpFaceHandler {
         JsonElement handle(JsonElement body) throws Throwable;
     }
 
-    protected void faceHandle(String path, FacePingHandler handler) {
+    protected void handleHttpApi(String path, HttpFaceHandler handler) {
         httpPingServer.handle(path, body -> {
             JsonElement parsed = body != null ? JsonParser.parseString(body) : null;
             var response = handler.handle(parsed);
-            return Promise.fulfilled(response != null ? response.toString() : "null");
+            return response != null ? response.toString() : "null";
         });
     }
 
     void setupPetrolStationCommon() {
-        httpPingServer.handle("/api/petrolStation/getAll", body -> {
+
+        //region petrolStation
+
+        handleHttpApi("/api/petrolStation/getAll", body -> {
             var descriptions = PetrolStationAgent.findAll(this).get();
 
             var names = Arrays.stream(descriptions)
@@ -87,10 +82,22 @@ public abstract class AgentWithFace extends Agent {
                     })
                     .toArray();
 
-            return Promise.fulfilled(Jsonable.toString(names));
+            return Jsonable.toJson(names);
         });
 
-        httpPingServer.handle("/api/petrolStation/currentPetrolPrice", petrolStationName -> {
+        handleHttpApi("/api/petrolStation/isOnline", body -> {
+            var petrolStationName = body.getAsString();
+
+            try {
+                var descs = PetrolStationAgent.findByUniqueName(this, petrolStationName).get();
+                return new JsonPrimitive(true);
+            } catch (Throwable e) {
+                return new JsonPrimitive(false);
+            }
+        });
+
+        handleHttpApi("/api/petrolStation/currentPetrolPrice", body -> {
+            var petrolStationName = body.getAsString();
             var petrolStation = new AID(petrolStationName, true);
             var response = new JsonObject();
 
@@ -99,18 +106,31 @@ public abstract class AgentWithFace extends Agent {
             response.addProperty("name", petrolStationName);
             response.add("petrolPrice", petrolPrice.toJson());
 
-            return Promise.fulfilled(response.toString());
+            return response;
         });
 
+        handleHttpApi("/api/petrolStation/stationDescription", body -> {
+            var petrolStationName = body.getAsString();
+            var petrolStation = new AID(petrolStationName, true);
 
-        httpPingServer.handle("/api/petrolStation/stationDescription",
-                petrolStationName -> new Promise<String>().fulfillInAsync(() -> {
+            var petrolPrice = PetrolStationAgent.getStationDescription(this, petrolStation).get();
 
-                    var petrolStation = new AID(petrolStationName, true);
+            return petrolPrice.toJson();
+        });
 
-                    var petrolPrice = PetrolStationAgent.getStationDescription(this, petrolStation).get();
+        //endregion
 
-                    return petrolPrice.toString();
-                }));
+        //region pylon
+
+        handleHttpApi("/api/pylon/isOnline", body -> {
+            var petrolStationName = body.getAsString();
+
+            try {
+                var descs = PetrolStationAgent.findByUniqueName(this, petrolStationName).get();
+                return new JsonPrimitive(true);
+            } catch (Throwable e) {
+                return new JsonPrimitive(false);
+            }
+        });
     }
 }

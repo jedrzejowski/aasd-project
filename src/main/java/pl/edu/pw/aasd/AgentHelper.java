@@ -1,13 +1,12 @@
 package pl.edu.pw.aasd;
 
+import com.google.gson.JsonElement;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.NotFoundException;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.DFService;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAAgentManagement.*;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -16,10 +15,12 @@ import java.net.ConnectException;
 import java.util.Date;
 
 import java.util.Arrays;
-import java.util.concurrent.TimeoutException;
+import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 import jade.proto.AchieveREInitiator;
+import jade.proto.AchieveREResponder;
 import pl.edu.pw.aasd.promise.Promise;
 
 public class AgentHelper {
@@ -30,22 +31,8 @@ public class AgentHelper {
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(agent.getAID());
 
-
         for (var serviceName : serviceNames) {
-            ServiceDescription sd = new ServiceDescription();
-
-            if (serviceMatch.matcher(serviceName).find()) {
-                var vals = serviceName.split(":");
-
-                sd.setType(vals[0]);
-                sd.setName(vals[1]);
-
-            } else {
-                sd.setType(serviceName);
-                sd.setName(agent.getName());
-            }
-
-            dfd.addServices(sd);
+            dfd.addServices(stringToServiceDescription(serviceName));
         }
 
         try {
@@ -55,12 +42,56 @@ public class AgentHelper {
         }
     }
 
+    public static ServiceDescription stringToServiceDescription(String str) {
+        var sd = new ServiceDescription();
+
+        if (serviceMatch.matcher(str).find()) {
+            var vals = str.split(":");
+
+            sd.setType(vals[0]);
+            sd.setName(vals[1]);
+
+        } else {
+            sd.setType(str);
+            sd.setName(str);
+        }
+
+        return sd;
+    }
+
+    public static DFAgentDescription[] findAllOf2(Agent agent, String... serviceNames) {
+
+        DFAgentDescription template = new DFAgentDescription();
+        for (var serviceName : serviceNames) {
+            template.addServices(stringToServiceDescription(serviceName));
+        }
+
+        try {
+            return DFService.search(agent, template);
+        } catch (Throwable e) {
+            return new DFAgentDescription[0];
+        }
+    }
+
+    public static Promise<DFAgentDescription> findOne(Agent agent, String... serviceNames) {
+        return new Promise<DFAgentDescription>().fulfillInAsync(() -> {
+            var desc = findAllOf2(agent, serviceNames);
+            if (desc.length == 1) {
+                return desc[0];
+            } else {
+                throw new NotFoundException();
+            }
+        });
+    }
+
     public static Promise<DFAgentDescription[]> findAllOf(Agent agent, String type, String name) {
 
         var template = new DFAgentDescription();
 
         var sd = new ServiceDescription();
         sd.setType(type);
+
+        template.addServices(sd);
 
         return new Promise<DFAgentDescription[]>().fulfillInAsync(() -> {
             return Arrays.stream(
@@ -116,12 +147,9 @@ public class AgentHelper {
     }
 
     public static <T extends Jsonable> Promise<T> requestInteraction(
-            Agent me,
-            AID agent,
-            int performative,
-            String ontology,
-            Jsonable content,
-            Class<T> cls
+            Agent me, AID agent,
+            int performative, String ontology,
+            Jsonable content, Class<T> cls
     ) {
         var msg = new ACLMessage(performative);
         msg.setOntology(ontology);
@@ -137,26 +165,54 @@ public class AgentHelper {
                 .thenApply(response -> Jsonable.from(response.getContent(), cls));
     }
 
+
+    public interface ResponderI {
+        Promise<JsonElement> handle(ACLMessage msg) throws Throwable;
+    }
+
     public static void setupRequestResponder(
             final Agent agent,
             final MessageTemplate template,
-            final ServiceCallback callback
+            final ResponderI callback
     ) {
-        agent.addBehaviour(new CyclicBehaviour() {
-            @Override
-            public void action() {
-                ACLMessage msg = myAgent.receive(template);
+        var aclMap = new HashMap<ACLMessage, Promise<JsonElement>>();
 
-                if (msg != null) {
-                    try {
-                        callback.handle(msg);
-                    } catch (Exception e) {
-                        ACLMessage reply = msg.createReply();
-                        reply.setPerformative(ACLMessage.FAILURE);
-                        agent.send(reply);
+        agent.addBehaviour(new AchieveREResponder(agent, template) {
+            protected ACLMessage handleRequest(ACLMessage request) throws NotUnderstoodException, RefuseException {
+
+                try {
+                    var promise = callback.handle(request);
+                    if (promise == null) {
+                        throw new RefuseException("");
                     }
-                } else {
-                    block();
+
+                    aclMap.put(request, promise);
+
+                    ACLMessage agree = request.createReply();
+                    agree.setPerformative(ACLMessage.AGREE);
+                    return agree;
+
+                } catch (RefuseException | NotUnderstoodException e) {
+                    throw e;
+                } catch (Throwable e) {
+                    throw new RefuseException("");
+                }
+            }
+
+            protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
+
+                try {
+                    var promise = aclMap.remove(request);
+                    var obj = promise.get();
+
+                    ACLMessage inform = request.createReply();
+                    inform.setPerformative(ACLMessage.INFORM);
+                    inform.setLanguage("application/json");
+                    inform.setContent(obj.toString());
+                    return inform;
+
+                } catch (Throwable e) {
+                    throw new FailureException("");
                 }
             }
         });
@@ -166,7 +222,7 @@ public class AgentHelper {
             final Agent agent,
             final int performative,
             final String ontology,
-            final ServiceCallback callback
+            final ResponderI callback
     ) {
         var template = MessageTemplate.and(
                 MessageTemplate.MatchPerformative(performative),
@@ -176,10 +232,6 @@ public class AgentHelper {
         setupRequestResponder(agent, template, callback);
     }
 
-
-    public interface ServiceCallback {
-        void handle(ACLMessage msg);
-    }
 
     static public <T extends Jsonable> void reply(Agent agent, ACLMessage msg, int performative, T obj) {
         var reply = msg.createReply();
