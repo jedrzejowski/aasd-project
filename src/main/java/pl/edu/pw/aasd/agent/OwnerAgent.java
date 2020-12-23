@@ -56,7 +56,7 @@ public class OwnerAgent extends AgentWithFace<OwnerAgent.MyData> {
             var ac = cc.createNewAgent(
                     uniqueName,
                     PetrolStationAgent.class.getName(),
-                    new Object[]{this.getUniqueName()}
+                    new Object[]{uniqueName}
             );
             ac.start();
 
@@ -74,7 +74,7 @@ public class OwnerAgent extends AgentWithFace<OwnerAgent.MyData> {
             var ac = cc.createNewAgent(
                     uniqueName,
                     PetrolStationAgent.class.getName(),
-                    new Object[]{this.getUniqueName()}
+                    new Object[]{uniqueName}
             );
             ac.start();
             return null;

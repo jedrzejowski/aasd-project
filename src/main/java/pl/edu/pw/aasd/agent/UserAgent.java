@@ -1,14 +1,9 @@
 package pl.edu.pw.aasd.agent;
 
 import jade.core.AID;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import org.javatuples.Pair;
 import pl.edu.pw.aasd.AgentWithFace;
 import pl.edu.pw.aasd.Jsonable;
 import pl.edu.pw.aasd.data.PetrolPrice;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 public class UserAgent extends AgentWithFace {
 

@@ -7,6 +7,17 @@ $(() => {
     const addPetrolStationAccept = $("#addPetrolStationAccept");
     const addPetrolStationUniqueName = $("#addPetrolStationUniqueName");
 
+    const editPetrolStationModal = $("#editPetrolStationModal").modal({});
+    const editUniqueName = $("#editUniqueName");
+    const editLogo = $("#editLogo");
+    const editCommonName = $("#editCommonName");
+    const editDescription = $("#editDescription");
+    const saveDescriptionBtn = $("#saveDescriptionBtn");
+    const editPetrolPb95 = $("#editPetrolPb95");
+    const editPetrolPb98 = $("#editPetrolPb98");
+    const editPetrolDiesel = $("#editPetrolDiesel");
+    const savePetrolBtn = $("#savePetrolBtn");
+
     function openAddPetrolStationModal() {
         addPetrolStationUniqueName.val("");
         addPetrolStationModal.modal("show");
@@ -42,17 +53,31 @@ $(() => {
 
             const isOnlineSpan = $("<span>");
 
-            function handleLineStatusUpdate() {
-                myFetch("/api/petrolStation/isOnline", stationUniqueName).then(is => {
-                    isOnlineSpan.text(is ? "Online" : "Offline");
-                });
+            async function handleLineStatusUpdate() {
+                const [isStation, isPylon] = await Promise.all([
+                    myFetch("/api/petrolStation/isOnline", stationUniqueName),
+                    myFetch("/api/pylon/isOnline", stationUniqueName)
+                ]);
+
+                isOnlineSpan.text([
+                    isStation ? "Online" : "Offline",
+                    isPylon ? "Online" : "Offline"
+                ].join("/"));
             }
+
+            const editButton = $("<button>", {
+                text: "Edytuj",
+                type: "button",
+                class: "btn btn-primary",
+                click: () => openEditPetrolStationModal(stationUniqueName)
+            })
 
             $("<tr>", {
                 append: [
                     $("<td>", {text: ++i}),
                     $("<td>", {text: stationUniqueName}),
                     $("<td>", {append: [isOnlineSpan]}),
+                    $("<td>", {append: [editButton]})
                 ],
                 appendTo: ownedPetrolStationsTbody
             });
@@ -61,7 +86,42 @@ $(() => {
         }
     }
 
+    function openEditPetrolStationModal(stationName) {
+        editPetrolStationModal.modal("show");
+
+        editUniqueName.val(stationName);
+
+        myFetch("/api/petrolStation/getStationDescription", stationName).then(stationDescription => {
+            editLogo.val(stationDescription.logo);
+            editCommonName.val(stationDescription.commonName);
+            editDescription.val(stationDescription.description);
+        });
+
+        myFetch("/api/petrolStation/getCurrentPetrolPrice", stationName).then(petrolprice => {
+            editPetrolPb95.val(petrolprice.pb95);
+            editPetrolPb98.val(petrolprice.pb98);
+            editPetrolDiesel.val(petrolprice.diesel);
+        });
+    }
+
+    async function saveDescription() {
+        myFetch("/api/petrolStation/setStationDescription", {
+            uniqueName: editUniqueName.val(),
+            stationDescription: {
+                logo: editLogo.val(),
+                commonName: editCommonName.val(),
+                description: editDescription.val()
+            }
+        });
+    }
+
+    async function savePetrol() {
+
+    }
+
     ownedPetrolStationsSearchBtn.click(searchOwnedPetrolStations);
     addPetrolStationShowModal.click(openAddPetrolStationModal);
     addPetrolStationAccept.click(createNewPetrolStation);
+    savePetrolBtn.click(savePetrol);
+    saveDescriptionBtn.click(saveDescription);
 });

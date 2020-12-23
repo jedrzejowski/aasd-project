@@ -1,6 +1,5 @@
 package pl.edu.pw.aasd.agent;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import jade.core.AID;
@@ -22,14 +21,14 @@ import java.util.Collection;
 public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData> {
 
     static class MyData extends Jsonable {
-        StationDescription stationDescription = null;
-        PetrolPrice currentPetrolPrice = null;
+        StationDescription stationDescription = new StationDescription();
+        PetrolPrice currentPetrolPrice = new PetrolPrice();
         Collection<UserVote> votes = new ArrayList<>();
     }
 
     @Override
-    protected MyData parseData(String name) {
-        return name == null ? new MyData() : Jsonable.from(name, MyData.class);
+    protected MyData parseData(String data) {
+        return data == null ? new MyData() : Jsonable.from(data, MyData.class);
     }
 
     @Override
@@ -46,12 +45,12 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
         );
 
         AgentHelper.setupRequestResponder(this,
-                ACLMessage.QUERY_REF, "stationDescription",
+                ACLMessage.QUERY_REF, "getStationDescription",
                 msg -> Promise.fulfilled(this.data.stationDescription.toJson())
         );
 
         AgentHelper.setupRequestResponder(this,
-                ACLMessage.REQUEST, "stationDescription",
+                ACLMessage.REQUEST, "setStationDescription",
                 msg -> new Promise<JsonElement>().fulfillInAsync(() -> {
                     var stationDescription = StationDescription.from(msg.getContent());
                     OwnerAgent.authOwner(msg.getSender()).get();
@@ -69,15 +68,27 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
         return AgentHelper.requestInteraction(
                 agent, petrol,
                 ACLMessage.QUERY_REF, "currentPetrolPrice",
-                null, PetrolPrice.class
-        );
+                null
+        ).thenApply(jsonElement -> Jsonable.from(jsonElement, PetrolPrice.class));
     }
 
     public static Promise<StationDescription> getStationDescription(Agent me, AID station) {
         return AgentHelper.requestInteraction(
                 me, station,
                 ACLMessage.QUERY_REF, "getStationDescription",
-                null, StationDescription.class);
+                null
+        ).thenApply(jsonElement -> {
+            System.out.println(jsonElement.toString());
+            return Jsonable.from(jsonElement, StationDescription.class);
+        });
+    }
+
+    public static Promise<Boolean> setStationDescription(Agent me, AID station, StationDescription sd) {
+        return AgentHelper.requestInteraction(
+                me, station,
+                ACLMessage.REQUEST, "setStationDescription",
+                sd.toJson()
+        ).thenApply(JsonElement::getAsBoolean);
     }
 
 
@@ -95,7 +106,7 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
             var cc = this.getContainerController();
 
             var pylonAgent = cc.createNewAgent(
-                    "PylonOf" + this.getLocalName(),
+                    "PylonOf" + this.getUniqueName(),
                     "pl.edu.pw.aasd.agent.PylonAgent",
                     new Object[]{
                             this.getUniqueName()

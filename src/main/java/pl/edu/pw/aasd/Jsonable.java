@@ -2,6 +2,7 @@ package pl.edu.pw.aasd;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 import java.util.Collection;
 
@@ -12,7 +13,14 @@ public class Jsonable {
         return gson.toJsonTree(this);
     }
 
+    static public JsonElement parseString(String json) {
+        return JsonParser.parseString(json);
+    }
+
     static public <T> T from(String json, Class<T> c) {
+        return gson.fromJson(json, c);
+    }
+    static public <T> T from(JsonElement json, Class<T> c) {
         return gson.fromJson(json, c);
     }
 

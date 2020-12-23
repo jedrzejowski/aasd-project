@@ -37,20 +37,8 @@ public class PylonAgent extends AgentWithFace<PylonAgent.MyData> {
         );
     }
 
-    public PetrolPrice getPrice() {
-        return price;
-    }
-
-    private void setPrice(PetrolPrice price) {
-        this.price = price;
-    }
-
-    public String getStationUniqueName() {
-        return this.stationUniqueName;
-    }
-
     public Promise<AID> getPetrolStationAgent() {
-        return PetrolStationAgent.findByUniqueName(this, this.getStationUniqueName())
+        return PetrolStationAgent.findByUniqueName(this, this.getUniqueName())
                 .thenApply(DFAgentDescription::getName);
     }
 

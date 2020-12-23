@@ -21,7 +21,8 @@ public abstract class AgentWithData<Data extends Jsonable> extends AgentWithUniq
     protected void saveState() {
         try {
             Files.write(this.getDataFileName(), data.toJson().toString().getBytes(StandardCharsets.UTF_8));
-        } catch (Throwable ignore) {
+        } catch (Throwable err) {
+            err.printStackTrace();
         }
     }
 
@@ -34,11 +35,16 @@ public abstract class AgentWithData<Data extends Jsonable> extends AgentWithUniq
 
     @Override
     protected void takeDown() {
+        super.takeDown();
         this.saveState();
     }
 
+    protected String getFilenamePrefix() {
+        return this.getClass().getSimpleName() + ":";
+    }
+
     private Path getDataFileName() {
-        return Path.of("data/" + this.getUniqueName() + ".json");
+        return Path.of("data/" + this.getFilenamePrefix() + this.getUniqueName() + ".json");
     }
 
     public Data getData() {

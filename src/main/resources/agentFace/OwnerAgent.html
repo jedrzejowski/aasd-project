@@ -48,6 +48,7 @@
             <th scope="col">#</th>
             <th scope="col">Unikalna Nazwa</th>
             <th scope="col">Status</th>
+            <th scope="col"></th>
         </tr>
         </thead>
         <tbody id="ownedPetrolStationsTbody">
@@ -74,6 +75,65 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" id="addPetrolStationAccept">Zapisz</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editPetrolStationModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Edytuj stację paliwową</h5>
+            </div>
+
+            <div class="modal-body">
+
+                <label class="form-label">Identyfikator stacji</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="editUniqueName" disabled>
+                </div>
+
+                <hr>
+
+                <label class="form-label">Logo stacji</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="editLogo">
+                </div>
+
+                <label class="form-label">Nazwa ogólna</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="editCommonName">
+                </div>
+
+                <label class="form-label">Opis stacji</label>
+                <div class="input-group mb-3">
+                    <textarea type="text" class="form-control" id="editDescription">
+                    </textarea>
+                </div>
+
+                <button type="button" class="btn btn-primary" id="saveDescriptionBtn">Zapisz</button>
+
+                <hr>
+
+                <label class="form-label">PB95</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="editPetrolPb95">
+                </div>
+
+                <label class="form-label">PB98</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="editPetrolPb98">
+                </div>
+
+                <label class="form-label">Diesel</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="editPetrolDiesel">
+                </div>
+
+                <button type="button" class="btn btn-primary" id="savePetrolBtn">Zapisz</button>
             </div>
 
         </div>

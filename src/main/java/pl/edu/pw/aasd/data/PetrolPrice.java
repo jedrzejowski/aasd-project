@@ -4,8 +4,9 @@ import pl.edu.pw.aasd.Jsonable;
 
 public class PetrolPrice extends Jsonable {
 
-    public String pb98;
-    public String pb95;
+    private String pb98 = "";
+    private String pb95 = "";
+    private String diesel = "";
 
     public PetrolPrice() {
     }
@@ -30,4 +31,11 @@ public class PetrolPrice extends Jsonable {
         this.pb95 = pb95;
     }
 
+    public String getDiesel() {
+        return diesel;
+    }
+
+    public void setDiesel(String diesel) {
+        this.diesel = diesel;
+    }
 }

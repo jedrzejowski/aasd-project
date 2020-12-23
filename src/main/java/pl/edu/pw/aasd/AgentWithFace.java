@@ -7,6 +7,7 @@ import com.google.gson.JsonPrimitive;
 import jade.core.AID;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import pl.edu.pw.aasd.agent.PetrolStationAgent;
+import pl.edu.pw.aasd.data.StationDescription;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -96,26 +97,33 @@ public abstract class AgentWithFace<Data extends Jsonable> extends AgentWithData
             }
         });
 
-        handleHttpApi("/api/petrolStation/currentPetrolPrice", body -> {
-            var petrolStationName = body.getAsString();
-            var petrolStation = new AID(petrolStationName, true);
-            var response = new JsonObject();
+        handleHttpApi("/api/petrolStation/getCurrentPetrolPrice", body -> {
+            var uniqueName = body.getAsString();
 
+            var petrolStation = PetrolStationAgent.findByUniqueName(this, uniqueName).get().getName();
             var petrolPrice = PetrolStationAgent.getCurrentPetrolPrice(this, petrolStation).get();
 
-            response.addProperty("name", petrolStationName);
-            response.add("petrolPrice", petrolPrice.toJson());
-
-            return response;
+            return petrolPrice.toJson();
         });
 
-        handleHttpApi("/api/petrolStation/stationDescription", body -> {
-            var petrolStationName = body.getAsString();
-            var petrolStation = new AID(petrolStationName, true);
+        handleHttpApi("/api/petrolStation/getStationDescription", body -> {
+            var uniqueName = body.getAsString();
 
-            var petrolPrice = PetrolStationAgent.getStationDescription(this, petrolStation).get();
+            var petrolStation = PetrolStationAgent.findByUniqueName(this, uniqueName).get().getName();
+            var stationDescription = PetrolStationAgent.getStationDescription(this, petrolStation).get();
 
-            return petrolPrice.toJson();
+            return stationDescription.toJson();
+        });
+
+        handleHttpApi("/api/petrolStation/setStationDescription", body -> {
+            var json = body.getAsJsonObject();
+            var description = Jsonable.from(json.get("stationDescription"), StationDescription.class);
+            var uniqueName = json.get("uniqueName").getAsString();
+
+            var petrolStation = PetrolStationAgent.findByUniqueName(this, uniqueName).get().getName();
+            var response = PetrolStationAgent.setStationDescription(this, petrolStation, description).get();
+
+            return new JsonPrimitive(response);
         });
 
         //endregion
@@ -132,5 +140,7 @@ public abstract class AgentWithFace<Data extends Jsonable> extends AgentWithData
                 return new JsonPrimitive(false);
             }
         });
+
+        //endregion
     }
 }

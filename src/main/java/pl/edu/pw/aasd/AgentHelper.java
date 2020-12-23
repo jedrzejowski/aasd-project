@@ -146,10 +146,10 @@ public class AgentHelper {
         return promise;
     }
 
-    public static <T extends Jsonable> Promise<T> requestInteraction(
+    public static Promise<JsonElement> requestInteraction(
             Agent me, AID agent,
             int performative, String ontology,
-            Jsonable content, Class<T> cls
+            JsonElement content
     ) {
         var msg = new ACLMessage(performative);
         msg.setOntology(ontology);
@@ -162,7 +162,7 @@ public class AgentHelper {
         }
 
         return requestInteraction(me, msg)
-                .thenApply(response -> Jsonable.from(response.getContent(), cls));
+                .thenApply(response -> Jsonable.parseString(response.getContent()));
     }
 
 
