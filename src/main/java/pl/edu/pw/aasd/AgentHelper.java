@@ -194,7 +194,6 @@ public class AgentHelper {
         setupRequestResponder(agent, template, callback);
     }
 
-
     static public <T extends Jsonable> void reply(Agent agent, ACLMessage msg, int performative, T obj) {
         var reply = msg.createReply();
         reply.setPerformative(performative);

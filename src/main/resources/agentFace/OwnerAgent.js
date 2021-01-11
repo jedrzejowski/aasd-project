@@ -13,6 +13,8 @@ $(() => {
     const editCommonName = $("#editCommonName");
     const editDescription = $("#editDescription");
     const saveDescriptionBtn = $("#saveDescriptionBtn");
+    const editLongitude = $("#editLongitude")
+    const editLatitude = $("#editLatitude")
     const editPetrolPb95 = $("#editPetrolPb95");
     const editPetrolPb98 = $("#editPetrolPb98");
     const editPetrolDiesel = $("#editPetrolDiesel");
@@ -95,6 +97,8 @@ $(() => {
             editLogo.val(stationDescription.logo);
             editCommonName.val(stationDescription.commonName);
             editDescription.val(stationDescription.description);
+            editLatitude.val(stationDescription.latitude);
+            editLongitude.val(stationDescription.longitude);
         });
 
         myFetch("/api/petrolStation/getCurrentPetrolPrice", stationName).then(petrolprice => {
@@ -110,7 +114,9 @@ $(() => {
             stationDescription: {
                 logo: editLogo.val(),
                 commonName: editCommonName.val(),
-                description: editDescription.val()
+                description: editDescription.val(),
+                latitude: editLatitude.val(),
+                longitude: editLongitude.val()
             }
         });
     }

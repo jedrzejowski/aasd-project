@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pl">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="UserAgent.css">
+
+    <title>Title</title>
+
+</head>
+<body>
+
+<div class="container" style="display: inherit;">
+    <h1>
+        <small class="text-muted">Agent name:</small>
+        <span id="agent-name"></span>
+    </h1>
+    <h1>
+        <small class="text-muted">Agent class:</small>
+        <span id="agent-class"></span>
+    </h1>
+</div>
+
+<div class="container">
+
+    <h5>
+        Dane Pojazdu
+    </h5>
+
+    <hr>
+
+    <label class="form-label">Ilość paliwa</label>
+    <div class="input-group mb-3">
+        <input type="text" class="form-control" id="editVehicleFuelLeft">
+        <span class="input-group-text">[litrów]</span>
+    </div>
+
+    <label class="form-label">Ilość spalanego paliwa na 100[km]</label>
+    <div class="input-group mb-3">
+        <input type="text" class="form-control" id="editVehicleFuelPerKilometer">
+        <span class="input-group-text">[litrów]</span>
+    </div>
+
+    <label class="form-label">Latitude</label>
+    <div class="input-group mb-3">
+        <input type="text" class="form-control" id="editVehicleLatitude">
+    </div>
+
+    <label class="form-label">Longitude</label>
+    <div class="input-group mb-3">
+        <input type="text" class="form-control" id="editVehicleLongitude">
+    </div>
+
+
+    <button type="button" class="btn btn-primary" id="saveVehicleData">Zapisz</button>
+
+</div>
+
+<script src="jquery.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW"
+        crossorigin="anonymous"></script>
+
+<script src="lib.js"></script>
+<script src="UserAgent.js"></script>
+
+
+</body>
+</html>

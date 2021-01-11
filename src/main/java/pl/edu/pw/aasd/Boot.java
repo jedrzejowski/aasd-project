@@ -14,12 +14,9 @@ public class Boot {
         agents += "Petrol1:pl.edu.pw.aasd.agent.PetrolStationAgent;";
         agents += "Petrol2:pl.edu.pw.aasd.agent.PetrolStationAgent;";
 
-
         jade.Boot.main(new String[]{
                 "-gui",
                 agents
         });
-
-
     }
 }

@@ -77,10 +77,7 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
                 me, station,
                 ACLMessage.QUERY_REF, "getStationDescription",
                 null
-        ).thenApply(jsonElement -> {
-            System.out.println(jsonElement.toString());
-            return Jsonable.from(jsonElement, StationDescription.class);
-        });
+        ).thenApply(jsonElement -> Jsonable.from(jsonElement, StationDescription.class));
     }
 
     public static Promise<Boolean> setStationDescription(Agent me, AID station, StationDescription sd) {
