@@ -1,6 +1,7 @@
 package pl.edu.pw.aasd;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.NotFoundException;
@@ -11,6 +12,7 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
 import java.net.ConnectException;
+import java.util.Arrays;
 import java.util.Date;
 
 import java.util.HashMap;
@@ -50,7 +52,6 @@ public class AgentHelper {
 
         } else {
             sd.setType(str);
-            sd.setName(str);
         }
 
         return sd;
@@ -186,6 +187,7 @@ public class AgentHelper {
             final String ontology,
             final ResponderI callback
     ) {
+
         var template = MessageTemplate.and(
                 MessageTemplate.MatchPerformative(performative),
                 MessageTemplate.MatchOntology(ontology)
@@ -206,4 +208,16 @@ public class AgentHelper {
         agent.send(reply);
     }
 
+    static public JsonElement descriptionsToJson(DFAgentDescription[] descriptions){
+        var names = Arrays.stream(descriptions)
+                .map(DFAgentDescription::getName)
+                .map(aid -> {
+                    var obj = new JsonObject();
+                    obj.addProperty("name", aid.getName());
+                    return obj;
+                })
+                .toArray();
+
+        return Jsonable.toJson(names);
+    }
 }

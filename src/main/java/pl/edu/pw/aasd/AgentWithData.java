@@ -30,6 +30,7 @@ public abstract class AgentWithData<Data extends Jsonable> extends AgentWithUniq
 
     @Override
     protected void setup() {
+        super.setup();
         this.loadState();
     }
 

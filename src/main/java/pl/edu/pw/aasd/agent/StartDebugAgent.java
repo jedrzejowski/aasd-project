@@ -17,6 +17,14 @@ public class StartDebugAgent extends Agent {
             ).start();
 
             cc.createNewAgent(
+                    "Owner2",
+                    OwnerAgent.class.getName(),
+                    new Object[]{
+                            "owner002"
+                    }
+            ).start();
+
+            cc.createNewAgent(
                     "User1",
                     UserAgent.class.getName(),
                     new Object[]{

@@ -2,7 +2,6 @@ package pl.edu.pw.aasd.agent;
 
 import com.google.gson.JsonObject;
 import jade.core.AID;
-import jade.wrapper.StaleProxyException;
 import pl.edu.pw.aasd.AgentHelper;
 import pl.edu.pw.aasd.AgentWithFace;
 import pl.edu.pw.aasd.Boot;
@@ -11,7 +10,6 @@ import pl.edu.pw.aasd.promise.Promise;
 
 import java.util.ArrayList;
 import java.util.Collection;
-
 
 public class OwnerAgent extends AgentWithFace<OwnerAgent.MyData> {
 

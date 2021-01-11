@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 public class Promise<T> extends PromiseSupport<T> {
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(1);
+    private final ExecutorService executor = Executors.newFixedThreadPool(50);
 
     private Runnable fulfillmentAction;
     private Consumer<? super Throwable> exceptionHandler;

@@ -4,6 +4,8 @@ $(() => {
     const editVehicleLatitude = $("#editVehicleLatitude");
     const editVehicleLongitude = $("#editVehicleLongitude");
     const saveVehicleData = $("#saveVehicleData");
+    const searchNearPetrolStationsBtn = $("#searchNearPetrolStationsBtn");
+    const nearPetrolStationsTable = $("#nearPetrolStationsTable");
 
     async function fetchGetVehicleData() {
 
@@ -24,7 +26,38 @@ $(() => {
         });
     }
 
+    async function searchNearPetrolStations() {
+        const stations = await myFetch("/api/this/findNearPetrolStation") ?? [];
+
+        nearPetrolStationsTable.empty();
+
+        let i = 0;
+        for (const station of stations) {
+
+            const isOnlineSpan = $("<span>");
+
+            const editButton = $("<button>", {
+                text: "Pokaż",
+                type: "button",
+                class: "btn btn-primary",
+                click: () => {}
+            });
+
+            $("<tr>", {
+                append: [
+                    $("<td>", {text: ++i}),
+                    $("<td>", {text: station.stationDescription.commonName}),
+                    $("<td>", {text: station.stationDescription.latitude+"/"+station.stationDescription.longitude}),
+                    $("<td>", {append: JSON.stringify(station.petrolPrice)}),
+                    $("<td>", {append: [editButton]})
+                ],
+                appendTo: nearPetrolStationsTable
+            });
+        }
+    }
+
     saveVehicleData.click(fetchSaveVehicleData);
+    searchNearPetrolStationsBtn.click(searchNearPetrolStations);
 
     fetchGetVehicleData();
 });

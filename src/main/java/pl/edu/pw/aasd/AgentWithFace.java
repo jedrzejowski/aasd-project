@@ -7,6 +7,7 @@ import com.google.gson.JsonPrimitive;
 import jade.core.AID;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import pl.edu.pw.aasd.agent.PetrolStationAgent;
+import pl.edu.pw.aasd.data.Near;
 import pl.edu.pw.aasd.data.StationDescription;
 
 import java.io.File;
@@ -72,18 +73,7 @@ public abstract class AgentWithFace<Data extends Jsonable> extends AgentWithData
 
         handleHttpApi("/api/petrolStation/getAll", body -> {
             var descriptions = PetrolStationAgent.findAll(this);
-
-            var names = Arrays.stream(descriptions)
-                    .map(DFAgentDescription::getName)
-                    .map(AID::getName)
-                    .map(name -> {
-                        var obj = new JsonObject();
-                        obj.addProperty("name", name);
-                        return obj;
-                    })
-                    .toArray();
-
-            return Jsonable.toJson(names);
+            return AgentHelper.descriptionsToJson(descriptions);
         });
 
         handleHttpApi("/api/petrolStation/isOnline", body -> {

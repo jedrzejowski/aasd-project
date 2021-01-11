@@ -10,6 +10,7 @@ import pl.edu.pw.aasd.AgentHelper;
 import pl.edu.pw.aasd.AgentWithFace;
 import pl.edu.pw.aasd.Boot;
 import pl.edu.pw.aasd.Jsonable;
+import pl.edu.pw.aasd.data.Near;
 import pl.edu.pw.aasd.data.PetrolPrice;
 import pl.edu.pw.aasd.data.StationDescription;
 import pl.edu.pw.aasd.data.UserVote;
@@ -90,6 +91,10 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
 
 
     public static DFAgentDescription[] findAll(Agent agent) {
+        return AgentHelper.findAllOf(agent, "petrolStation");
+    }
+
+    public static DFAgentDescription[] findNear(Agent agent, Near near) {
         return AgentHelper.findAllOf(agent, "petrolStation");
     }
 
