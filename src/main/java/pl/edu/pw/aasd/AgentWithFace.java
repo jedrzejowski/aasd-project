@@ -25,7 +25,14 @@ public abstract class AgentWithFace<Data extends Jsonable> extends AgentWithData
         this.httpPingServer = new HttpPingServer();
 
         this.httpPingServer.handleFile("/", "agentFace/" + this.getClass().getSimpleName() + ".html");
-        this.staticFilesSetup("/", "agentFace/");
+        this.httpPingServer.handleFile("/jquery.js", "agentFace/jquery.js");
+        this.httpPingServer.handleFile("/lib.js", "agentFace/lib.js");
+        this.httpPingServer.handleFile("/OwnerAgent.html", "agentFace/OwnerAgent.html");
+        this.httpPingServer.handleFile("/OwnerAgent.js", "agentFace/OwnerAgent.js");
+        this.httpPingServer.handleFile("/PylonAgent.html", "agentFace/PylonAgent.html");
+        this.httpPingServer.handleFile("/PylonAgent.js", "agentFace/PylonAgent.js");
+        this.httpPingServer.handleFile("/UserAgent.html", "agentFace/UserAgent.html");
+        this.httpPingServer.handleFile("/UserAgent.js", "agentFace/UserAgent.js");
 
         handleHttpApi("/name", body -> new JsonPrimitive(this.getAID().getName()));
         handleHttpApi("/class", body -> new JsonPrimitive(this.getClass().getName()));
