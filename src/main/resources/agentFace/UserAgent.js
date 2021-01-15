@@ -6,6 +6,7 @@ $(() => {
     const saveVehicleData = $("#saveVehicleData");
     const searchNearPetrolStationsBtn = $("#searchNearPetrolStationsBtn");
     const nearPetrolStationsTable = $("#nearPetrolStationsTable");
+    const radius = $("#radius");
 
     async function fetchGetVehicleData() {
 
@@ -27,7 +28,9 @@ $(() => {
     }
 
     async function searchNearPetrolStations() {
-        const stations = await myFetch("/api/this/findNearPetrolStation") ?? [];
+        const stations = await myFetch("/api/this/findNearPetrolStation",{
+            radius: radius.val()
+        }) ?? [];
 
         nearPetrolStationsTable.empty();
 

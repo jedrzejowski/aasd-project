@@ -8,14 +8,10 @@ import pl.edu.pw.aasd.AgentHelper;
 import pl.edu.pw.aasd.AgentWithFace;
 import pl.edu.pw.aasd.AgentWithUniqueName;
 import pl.edu.pw.aasd.Jsonable;
-import pl.edu.pw.aasd.data.Near;
-import pl.edu.pw.aasd.data.PetrolPrice;
-import pl.edu.pw.aasd.data.StationDescription;
-import pl.edu.pw.aasd.data.VehicleData;
+import pl.edu.pw.aasd.data.*;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 
 public class UserAgent extends AgentWithFace<UserAgent.MyData> {
 
@@ -78,10 +74,13 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
         });
 
         this.handleHttpApi("/api/this/findNearPetrolStation", body -> {
+            var request = body.getAsJsonObject();
+            var radius = Jsonable.from(request, RadiusRequest.class).getRadius();
+            float radiusInGeoCoords = radius / (float)78.471863174;
             var near = new Near(
                     this.data.vehicleData.getLatitude(),
                     this.data.vehicleData.getLongitude(),
-                    1000 // TODO wyliczyć
+                    radiusInGeoCoords
             );
             var descriptions = PetrolStationAgent.findNear(this, near);
 
@@ -96,6 +95,14 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
                             var stationDescriptionPromise = PetrolStationAgent.getStationDescription(this, aid);
                             var petrolPricePromise = PetrolStationAgent.getCurrentPetrolPrice(this, aid);
 
+                            var stationDesc = stationDescriptionPromise.get();
+                            if (countSquareDistance(
+                                            stationDesc.getLatitude(),
+                                            near.getLatitude(),
+                                            stationDesc.getLongitude(),
+                                            near.getLongitude()) > near.getDistance() * near.getDistance()
+                            )
+                                return null;
                             obj.addProperty("uniqueName", uniqueNamePromise.get());
                             obj.add("stationDescription", stationDescriptionPromise.get().toJson());
                             obj.add("petrolPrice", petrolPricePromise.get().toJson());
@@ -119,6 +126,12 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
 
     public void voteOnStation(AID petrolStation, PetrolPrice petrolPrice) {
 
+    }
+
+    private static double countSquareDistance(double lat1, double lat2, double long1, double long2){
+        var temp1 = (lat1 - lat2);
+        var temp2 = (long1 - long2);
+        return temp1 * temp1 + temp2 * temp2;
     }
 
 }
