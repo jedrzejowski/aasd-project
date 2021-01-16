@@ -94,15 +94,16 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
                             var uniqueNamePromise = AgentWithUniqueName.getUniqueName(this, aid);
                             var stationDescriptionPromise = PetrolStationAgent.getStationDescription(this, aid);
                             var petrolPricePromise = PetrolStationAgent.getCurrentPetrolPrice(this, aid);
-
-                            var stationDesc = stationDescriptionPromise.get();
-                            if (countSquareDistance(
-                                            stationDesc.getLatitude(),
-                                            near.getLatitude(),
-                                            stationDesc.getLongitude(),
-                                            near.getLongitude()) > near.getDistance() * near.getDistance()
-                            )
-                                return null;
+                            if (radius > 0) {
+                                var stationDesc = stationDescriptionPromise.get();
+                                if (countSquareDistance(
+                                        stationDesc.getLatitude(),
+                                        near.getLatitude(),
+                                        stationDesc.getLongitude(),
+                                        near.getLongitude()) > near.getDistance() * near.getDistance()
+                                )
+                                    return null;
+                            }
                             obj.addProperty("uniqueName", uniqueNamePromise.get());
                             obj.add("stationDescription", stationDescriptionPromise.get().toJson());
                             obj.add("petrolPrice", petrolPricePromise.get().toJson());

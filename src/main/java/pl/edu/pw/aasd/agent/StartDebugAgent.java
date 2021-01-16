@@ -32,6 +32,14 @@ public class StartDebugAgent extends Agent {
                     }
             ).start();
 
+            cc.createNewAgent(
+                    "Partner1",
+                    PartnerAgent.class.getName(),
+                    new Object[]{
+                            "partner001"
+                    }
+            ).start();
+
 
         } catch (Throwable e) {
             e.printStackTrace();
