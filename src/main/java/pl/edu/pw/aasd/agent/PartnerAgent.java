@@ -2,11 +2,14 @@ package pl.edu.pw.aasd.agent;
 
 import com.google.gson.JsonObject;
 import jade.core.Agent;
+import jade.core.AID;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.lang.acl.ACLMessage;
 import pl.edu.pw.aasd.AgentHelper;
 import pl.edu.pw.aasd.AgentWithFace;
 import pl.edu.pw.aasd.Jsonable;
 import pl.edu.pw.aasd.data.PartnerPromotion;
+import pl.edu.pw.aasd.promise.Promise;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +29,12 @@ public class PartnerAgent extends AgentWithFace<PartnerAgent.MyData> {
     @Override
     protected void setup() {
         super.setup();
-        AgentHelper.registerServices(this, "PartnerAgent" + this.getUniqueName());
+        AgentHelper.registerServices(this, "PartnerAgent:" + this.getUniqueName());
+
+        AgentHelper.setupRequestResponder(this,
+                ACLMessage.QUERY_REF, "getPromotions",
+                msg -> Promise.fulfilled(Jsonable.toJson(this.data.partnerPromotions.values()))
+        );
 
         this.handleHttpApi("/api/this/createPromotion", body -> {
             var request = body.getAsJsonObject();
@@ -36,7 +44,8 @@ public class PartnerAgent extends AgentWithFace<PartnerAgent.MyData> {
         });
 
         this.handleHttpApi("/api/this/getPromotions",
-                body -> Jsonable.toJson(this.data.partnerPromotions.values()));
+                body -> Jsonable.toJson(getPromotions()));
+
 
 //        AgentHelper.setupRequestResponder(this,
 //                ACLMessage.REQUEST, "createPromotion",
@@ -62,6 +71,21 @@ public class PartnerAgent extends AgentWithFace<PartnerAgent.MyData> {
 
     private void addPromotion(PartnerPromotion promotion) {
         this.data.partnerPromotions.put(promotion.getId(), promotion);
+    }
 
+    public Collection<PartnerPromotion> getPromotions(){
+        return this.data.partnerPromotions.values();
+    }
+
+    static public DFAgentDescription[] findAll(Agent agent){
+        return AgentHelper.findAllOf(agent, "PartnerAgent");
+    }
+
+    static public Promise<Collection<PartnerPromotion>> getPromotions(Agent me, AID partner){
+        return AgentHelper.requestInteraction(
+                me, partner,
+                ACLMessage.QUERY_REF, "getPromotions",
+                null
+        ).thenApply(jsonElement -> Jsonable.fromList(jsonElement, PartnerPromotion.class));
     }
 }

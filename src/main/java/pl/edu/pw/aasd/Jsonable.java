@@ -3,8 +3,10 @@ package pl.edu.pw.aasd;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
 
 import java.util.Collection;
+import java.util.List;
 
 public class Jsonable {
     public static Gson gson = new Gson();
@@ -22,6 +24,13 @@ public class Jsonable {
     }
     static public <T> T from(JsonElement json, Class<T> c) {
         return gson.fromJson(json, c);
+    }
+    static public <T> Collection<T> fromList(JsonElement json, Class<T> c) {
+        return gson.fromJson(json, new TypeToken<Collection<T>>(){}.getType());
+    }
+
+    static public <T> Collection<T> fromList(String json, Class<T> c) {
+        return gson.fromJson(json, new TypeToken<Collection<T>>(){}.getType());
     }
 
     @Override

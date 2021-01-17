@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import jade.core.AID;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import pl.edu.pw.aasd.AgentHelper;
 import pl.edu.pw.aasd.AgentWithFace;
 import pl.edu.pw.aasd.AgentWithUniqueName;
 import pl.edu.pw.aasd.Jsonable;
@@ -66,6 +65,34 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
 
         this.handleHttpApi("/api/this/getVehicleData",
                 body -> Jsonable.toJson(this.data.vehicleData));
+
+        this.handleHttpApi("/api/this/findPromotions", body -> {
+            var descriptions = PartnerAgent.findAll(this);
+            var names = Arrays.stream(descriptions)
+                    .map(DFAgentDescription::getName)
+                    .map(aid -> {
+                        var obj = new JsonObject();
+                        obj.addProperty("name", aid.getName());
+
+                        try {
+                            var uniqueNamePromise = AgentWithUniqueName.getUniqueName(this, aid);
+                            var promotionsPromise = PartnerAgent.getPromotions(this, aid);
+                            //var petrolPricePromise = PetrolStationAgent.getCurrentPetrolPrice(this, aid);
+
+                            obj.addProperty("uniqueName", uniqueNamePromise.get());
+                            obj.add("promotions", Jsonable.toJson(promotionsPromise.get()));
+
+                        } catch (Throwable ignore) {
+                            return null;
+                        }
+
+                        return obj;
+                    })
+                    .filter(Objects::nonNull)
+                    .toArray();
+
+            return Jsonable.toJson(names);
+        });
 
         this.handleHttpApi("/api/this/setVehicleData", body -> {
             var request = body.getAsJsonObject();

@@ -8,6 +8,9 @@ $(() => {
     const nearPetrolStationsTable = $("#nearPetrolStationsTable");
     const radius = $("#radius");
 
+    const searchPromotionsBtn = $("#searchPromotionsBtn");
+    const promotionsTable = $("#promotionsTable");
+
     async function fetchGetVehicleData() {
 
         const vehicleData = await myFetch("/api/this/getVehicleData");
@@ -59,8 +62,37 @@ $(() => {
         }
     }
 
+    async function searchPromotions() {
+        const pratnersPromotions = await myFetch("/api/this/findPromotions") ?? [];
+        promotionsTable.empty();
+
+        let i = 0;
+        for (const partner of pratnersPromotions) {
+            for (const promotion of partner.promotions) {
+                const reserveButton = $("<button>", {
+                    text: "Rezerwuj",
+                    type: "button",
+                    class: "btn btn-primary",
+                    //click: () => openEditPetrolStationModal(stationUniqueName)
+                });
+
+                $("<tr>", {
+                    append: [
+                        $("<td>", {text: ++i}),
+                        $("<td>", {text: partner.uniqueName}),
+                        $("<td>", {text: promotion.id}),
+                        $("<td>", {append: promotion.description}),
+                        $("<td>", {append: [reserveButton]})
+                    ],
+                    appendTo: promotionsTable
+                });
+            }
+        }
+    }
+
     saveVehicleData.click(fetchSaveVehicleData);
     searchNearPetrolStationsBtn.click(searchNearPetrolStations);
+    searchPromotionsBtn.click(searchPromotions);
 
     fetchGetVehicleData();
 });
