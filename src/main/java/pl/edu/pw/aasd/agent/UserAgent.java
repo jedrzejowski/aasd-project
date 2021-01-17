@@ -11,6 +11,7 @@ import pl.edu.pw.aasd.data.*;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 public class UserAgent extends AgentWithFace<UserAgent.MyData> {
 
@@ -62,6 +63,12 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
 //        }).start();
 
 //        PetrolStationAgent.getCurrentPetrolPrice(this, petrolAID);
+
+        this.handleHttpApi("/api/this/reservePromotion", body -> {
+            var promotion = body.getAsJsonObject();
+            var result = reservePromotion(promotion);
+            return new JsonPrimitive(result);
+        });
 
         this.handleHttpApi("/api/this/getVehicleData",
                 body -> Jsonable.toJson(this.data.vehicleData));
@@ -154,6 +161,16 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
 
     public void voteOnStation(AID petrolStation, PetrolPrice petrolPrice) {
 
+    }
+
+    private boolean reservePromotion(JsonObject promotionJson){
+        var promotion = Jsonable.from(promotionJson, PromotionReservationRequest.class);
+        try {
+            return PartnerAgent.reservePromotion(this, promotion.getPartner(), promotionJson).get();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private static double countSquareDistance(double lat1, double lat2, double long1, double long2){

@@ -1,6 +1,7 @@
 package pl.edu.pw.aasd.agent;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import jade.core.Agent;
 import jade.core.AID;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -9,11 +10,14 @@ import pl.edu.pw.aasd.AgentHelper;
 import pl.edu.pw.aasd.AgentWithFace;
 import pl.edu.pw.aasd.Jsonable;
 import pl.edu.pw.aasd.data.PartnerPromotion;
+import pl.edu.pw.aasd.data.PromotionReservationRequest;
 import pl.edu.pw.aasd.promise.Promise;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public class PartnerAgent extends AgentWithFace<PartnerAgent.MyData> {
 
@@ -34,6 +38,15 @@ public class PartnerAgent extends AgentWithFace<PartnerAgent.MyData> {
         AgentHelper.setupRequestResponder(this,
                 ACLMessage.QUERY_REF, "getPromotions",
                 msg -> Promise.fulfilled(Jsonable.toJson(this.data.partnerPromotions.values()))
+        );
+
+        AgentHelper.setupRequestResponder(this,
+                ACLMessage.QUERY_REF, "reservePromotion",
+                msg -> {
+                    var reservation = Jsonable.from(msg.getContent(), PromotionReservationRequest.class);
+                    var result = this.data.partnerPromotions.get(reservation.getPromotionId()).incrementReservations();
+                    return Promise.fulfilled(new JsonPrimitive(result));
+                }
         );
 
         this.handleHttpApi("/api/this/createPromotion", body -> {
@@ -87,5 +100,26 @@ public class PartnerAgent extends AgentWithFace<PartnerAgent.MyData> {
                 ACLMessage.QUERY_REF, "getPromotions",
                 null
         ).thenApply(jsonElement -> Jsonable.fromList(jsonElement, PartnerPromotion.class));
+    }
+
+static public Promise<Boolean> reservePromotion(Agent me, String partnerName, JsonObject promotion){
+            return findByUniqueName(me, partnerName).thenApply(partner ->
+                    {
+                        try {
+                            return Jsonable.from(AgentHelper.requestInteraction(
+                                    me, partner.getName(),
+                                    ACLMessage.QUERY_REF, "reservePromotion",
+                                    promotion
+                            ).get(2, TimeUnit.SECONDS), Boolean.class);
+                        } catch (Throwable e) {
+                            e.printStackTrace();
+                            return Boolean.FALSE;
+                        }
+                    }
+            );
+    }
+
+    public static Promise<DFAgentDescription> findByUniqueName(Agent agent, String uniqueName) {
+        return AgentHelper.findOne(agent, "PartnerAgent:" + uniqueName);
     }
 }

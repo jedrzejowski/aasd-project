@@ -7,6 +7,7 @@ $(() => {
     const addPromotionAccept = $("#addPromotionAccept");
     const addPromotionName = $("#addPromotionName");
     const addPromotionDescription = $("#addPromotionDescription");
+    const addPromotionNumber = $("#addPromotionNumber");
 
     // const editPetrolStationModal = $("#editPetrolStationModal").modal({});
     // const editUniqueName = $("#editUniqueName");
@@ -34,12 +35,13 @@ $(() => {
     async function createNewPromotion() {
         const name = addPromotionName.val();
         const description = addPromotionDescription.val();
+        const maxReservations = addPromotionNumber.val();
 
         try {
             await myFetch("/api/this/createPromotion", {
                 id: name,
-                description: description
-
+                description: description,
+                maxReservations: maxReservations
             });
 
             makeAlert({text: "Utworzono promocję", type: "success"});
@@ -50,7 +52,7 @@ $(() => {
         closeAddPetrolStationModal();
     }
 
-    async function searchOwnedPetrolStations() {
+    async function searchOwnedPromotions() {
         promotionsTbody.empty();
 
         const promotions = await myFetch("/api/this/getPromotions") ?? [];
@@ -84,6 +86,7 @@ $(() => {
                     $("<td>", {text: ++i}),
                     $("<td>", {text: promotion.id}),
                     $("<td>", {append: promotion.description}),
+                    $("<td>", {text: promotion.actualReservations + '/' + promotion.maxReservations}),
                     $("<td>", {append: [editButton]})
                 ],
                 appendTo: promotionsTbody
@@ -130,7 +133,7 @@ $(() => {
 
     }
 
-    promotionsSearchBtn.click(searchOwnedPetrolStations);
+    promotionsSearchBtn.click(searchOwnedPromotions);
     addPromotionShowModal.click(openAddPetrolStationModal);
     addPromotionAccept.click(createNewPromotion);
     savePetrolBtn.click(savePetrol);

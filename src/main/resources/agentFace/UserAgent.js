@@ -62,18 +62,29 @@ $(() => {
         }
     }
 
+    async function reservePromotion(partnerUniqueName, promotionId){
+        var result = await myFetch("/api/this/reservePromotion", {
+            partner: partnerUniqueName,
+            promotionId: promotionId,
+        });
+        if (result)
+            makeAlert({text: "Zarezerwowano", type: "success"});
+        else
+            makeAlert({text: "Błąd rezerwacji", type: "error"});
+    }
+
     async function searchPromotions() {
-        const pratnersPromotions = await myFetch("/api/this/findPromotions") ?? [];
+        const patnersPromotions = await myFetch("/api/this/findPromotions") ?? [];
         promotionsTable.empty();
 
         let i = 0;
-        for (const partner of pratnersPromotions) {
+        for (const partner of patnersPromotions) {
             for (const promotion of partner.promotions) {
                 const reserveButton = $("<button>", {
                     text: "Rezerwuj",
                     type: "button",
                     class: "btn btn-primary",
-                    //click: () => openEditPetrolStationModal(stationUniqueName)
+                    click: () => reservePromotion(partner.uniqueName, promotion.id)
                 });
 
                 $("<tr>", {
@@ -82,6 +93,7 @@ $(() => {
                         $("<td>", {text: partner.uniqueName}),
                         $("<td>", {text: promotion.id}),
                         $("<td>", {append: promotion.description}),
+                        $("<td>", {text: promotion.actualReservations + '/' + promotion.maxReservations}),
                         $("<td>", {append: [reserveButton]})
                     ],
                     appendTo: promotionsTable
