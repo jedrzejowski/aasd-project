@@ -122,7 +122,11 @@ $(() => {
     }
 
     async function savePetrol() {
-
+        myFetch("/api/petrolStation/setStationPrices", {
+            pb95: editPetrolPb95.val(),
+            pb98: editPetrolPb98.val(),
+            diesel: editPetrolDiesel.val()
+        });
     }
 
     ownedPetrolStationsSearchBtn.click(searchOwnedPetrolStations);

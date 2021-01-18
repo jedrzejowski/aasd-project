@@ -5,6 +5,7 @@ $(() => {
     const editVehicleLongitude = $("#editVehicleLongitude");
     const saveVehicleData = $("#saveVehicleData");
     const searchNearPetrolStationsBtn = $("#searchNearPetrolStationsBtn");
+    const searchCheapestPetrolStationsBtn = $("#searchCheapestPetrolStationsBtn");
     const nearPetrolStationsTable = $("#nearPetrolStationsTable");
     const radius = $("#radius");
 
@@ -62,6 +63,20 @@ $(() => {
         }
     }
 
+    async function searchCheapestPetrolStations(){
+        const station = await myFetch("/api/this/findCheapestPetrolStation") ?? [];
+        nearPetrolStationsTable.empty();
+        $("<tr>", {
+            append: [
+                $("<td>", {text: ++i}),
+                $("<td>", {text: station.stationDescription.commonName}),
+                $("<td>", {text: station.stationDescription.latitude+"/"+station.stationDescription.longitude}),
+                $("<td>", {append: JSON.stringify(station.petrolPrice)}),
+            ],
+            appendTo: nearPetrolStationsTable
+        });
+    }
+
     async function reservePromotion(partnerUniqueName, promotionId){
         var result = await myFetch("/api/this/reservePromotion", {
             partner: partnerUniqueName,
@@ -105,6 +120,7 @@ $(() => {
     saveVehicleData.click(fetchSaveVehicleData);
     searchNearPetrolStationsBtn.click(searchNearPetrolStations);
     searchPromotionsBtn.click(searchPromotions);
+    searchCheapestPetrolStationsBtn.click(searchCheapestPetrolStations);
 
     fetchGetVehicleData();
 });

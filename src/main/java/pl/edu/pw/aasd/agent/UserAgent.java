@@ -1,5 +1,6 @@
 package pl.edu.pw.aasd.agent;
 
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import jade.core.AID;
@@ -9,8 +10,7 @@ import pl.edu.pw.aasd.AgentWithUniqueName;
 import pl.edu.pw.aasd.Jsonable;
 import pl.edu.pw.aasd.data.*;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 public class UserAgent extends AgentWithFace<UserAgent.MyData> {
@@ -109,7 +109,13 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
 
         this.handleHttpApi("/api/this/findNearPetrolStation", body -> {
             var request = body.getAsJsonObject();
-            var radius = Jsonable.from(request, RadiusRequest.class).getRadius();
+            var radiusTemp = 0.0f;
+            try {
+                radiusTemp = Jsonable.from(request, RadiusRequest.class).getRadius();
+            } catch (Throwable e){
+
+            }
+            var radius = radiusTemp;
             float radiusInGeoCoords = radius / (float)78.471863174;
             var near = new Near(
                     this.data.vehicleData.getLatitude(),
@@ -151,6 +157,56 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
                     .toArray();
 
             return Jsonable.toJson(names);
+        });
+
+        this.handleHttpApi("/api/this/findCheapestPetrolStation", body -> {
+            var near = new Near(
+                    this.data.vehicleData.getLatitude(),
+                    this.data.vehicleData.getLongitude(),
+                    0
+            );
+            var descriptions = PetrolStationAgent.findAll(this);
+            if (descriptions.length == 0)
+                return new JsonObject();
+            List<Double> values = new ArrayList<>();
+            List<PetrolPrice> prices = new ArrayList<>();
+            List<StationDescription> stationDescriptions = new ArrayList<>();
+            List<String> names = new ArrayList<>();
+            List<String> uniqueNames = new ArrayList<>();
+            Arrays.stream(descriptions)
+                    .map(DFAgentDescription::getName)
+                    .forEach(aid -> {
+                        try {
+                            var stationDescriptionPromise = PetrolStationAgent.getStationDescription(this, aid);
+                            var petrolPricePromise = PetrolStationAgent.getCurrentPetrolPrice(this, aid);
+
+                            var stationDesc = stationDescriptionPromise.get();
+                            var petrolPrice = petrolPricePromise.get();
+                            var userData = this.data.vehicleData;
+
+                            var distance = Math.sqrt(countSquareDistance(stationDesc.getLatitude(), userData.getLatitude(), stationDesc.getLongitude(), userData.getLongitude()));
+                            var fuelNeeded = distance * (float)78.471863174 / 100 * userData.getFuelPerKilometer();
+
+                            var realPrice = (userData.getFuelLeft() + fuelNeeded) * Double.parseDouble(petrolPrice.getPb95());
+                            values.add(realPrice);
+                            prices.add(petrolPrice);
+                            stationDescriptions.add(stationDesc);
+                            names.add(aid.getName());
+                            uniqueNames.add(AgentWithUniqueName.getUniqueName(this, aid).get());
+                        } catch (Throwable ignore) {
+
+                        }
+                    });
+            int minimalIndex = 0;
+            for (int i = 1; i < values.size(); ++i)
+                if (values.get(i) < values.get(minimalIndex))
+                    minimalIndex = i;
+            var obj = new JsonObject();
+            obj.addProperty("name", names.get(minimalIndex));
+            obj.addProperty("uniqueName", uniqueNames.get(minimalIndex));
+            obj.add("stationDescription", stationDescriptions.get(minimalIndex).toJson());
+            obj.add("petrolPrice", prices.get(minimalIndex).toJson());
+            return obj;
         });
     }
 
