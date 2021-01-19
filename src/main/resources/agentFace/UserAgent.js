@@ -68,7 +68,7 @@ $(() => {
         nearPetrolStationsTable.empty();
         $("<tr>", {
             append: [
-                $("<td>", {text: ++i}),
+                $("<td>", {text: '1'}),
                 $("<td>", {text: station.stationDescription.commonName}),
                 $("<td>", {text: station.stationDescription.latitude+"/"+station.stationDescription.longitude}),
                 $("<td>", {append: JSON.stringify(station.petrolPrice)}),

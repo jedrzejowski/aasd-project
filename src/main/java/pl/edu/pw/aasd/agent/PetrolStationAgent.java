@@ -60,6 +60,16 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
                 })
         );
 
+        AgentHelper.setupRequestResponder(this,
+                ACLMessage.REQUEST, "setStationPrices",
+                msg -> new Promise<JsonElement>().fulfillInAsync(() -> {
+                    var petrolPrice = PetrolPrice.from(msg.getContent());
+                    OwnerAgent.authOwner(msg.getSender()).get();
+                    this.data.currentPetrolPrice = petrolPrice;
+                    return new JsonPrimitive(true);
+                })
+        );
+
         if (Boot.DEBUG_CREATE_CHILDREN) {
             this.createPylon();
         }
@@ -86,6 +96,14 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
                 me, station,
                 ACLMessage.REQUEST, "setStationDescription",
                 sd.toJson()
+        ).thenApply(JsonElement::getAsBoolean);
+    }
+
+    public static Promise<Boolean> setStationPrices(Agent me, AID station, PetrolPrice pp){
+        return AgentHelper.requestInteraction(
+                me, station,
+                ACLMessage.REQUEST, "setStationPrices",
+                pp.toJson()
         ).thenApply(JsonElement::getAsBoolean);
     }
 

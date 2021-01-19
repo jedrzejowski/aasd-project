@@ -123,9 +123,12 @@ $(() => {
 
     async function savePetrol() {
         myFetch("/api/petrolStation/setStationPrices", {
-            pb95: editPetrolPb95.val(),
-            pb98: editPetrolPb98.val(),
-            diesel: editPetrolDiesel.val()
+            uniqueName: editUniqueName.val(),
+            petrolPrice:{
+                pb95: editPetrolPb95.val(),
+                pb98: editPetrolPb98.val(),
+                diesel: editPetrolDiesel.val()
+            }
         });
     }
 

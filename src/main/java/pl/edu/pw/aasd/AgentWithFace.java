@@ -8,6 +8,7 @@ import jade.core.AID;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import pl.edu.pw.aasd.agent.PetrolStationAgent;
 import pl.edu.pw.aasd.data.Near;
+import pl.edu.pw.aasd.data.PetrolPrice;
 import pl.edu.pw.aasd.data.StationDescription;
 
 import java.io.File;
@@ -121,6 +122,17 @@ public abstract class AgentWithFace<Data extends Jsonable> extends AgentWithData
 
             var petrolStation = PetrolStationAgent.findByUniqueName(this, uniqueName).get().getName();
             var response = PetrolStationAgent.setStationDescription(this, petrolStation, description).get();
+
+            return new JsonPrimitive(response);
+        });
+
+        handleHttpApi("/api/petrolStation/setStationPrices", body -> {
+            var json = body.getAsJsonObject();
+            var prices = Jsonable.from(json.get("petrolPrice"), PetrolPrice.class);
+            var uniqueName = json.get("uniqueName").getAsString();
+
+            var petrolStation = PetrolStationAgent.findByUniqueName(this, uniqueName).get().getName();
+            var response = PetrolStationAgent.setStationPrices(this, petrolStation, prices).get();
 
             return new JsonPrimitive(response);
         });

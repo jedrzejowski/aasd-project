@@ -199,7 +199,7 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
                     });
             int minimalIndex = 0;
             for (int i = 1; i < values.size(); ++i)
-                if (values.get(i) < values.get(minimalIndex))
+                if (values.get(i) > values.get(minimalIndex))
                     minimalIndex = i;
             var obj = new JsonObject();
             obj.addProperty("name", names.get(minimalIndex));
