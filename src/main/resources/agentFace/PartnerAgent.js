@@ -9,26 +9,14 @@ $(() => {
     const addPromotionDescription = $("#addPromotionDescription");
     const addPromotionNumber = $("#addPromotionNumber");
 
-    // const editPetrolStationModal = $("#editPetrolStationModal").modal({});
-    // const editUniqueName = $("#editUniqueName");
-    // const editLogo = $("#editLogo");
-    // const editCommonName = $("#editCommonName");
-    // const editDescription = $("#editDescription");
-    // const saveDescriptionBtn = $("#saveDescriptionBtn");
-    // const editLongitude = $("#editLongitude")
-    // const editLatitude = $("#editLatitude")
-    // const editPetrolPb95 = $("#editPetrolPb95");
-    // const editPetrolPb98 = $("#editPetrolPb98");
-    // const editPetrolDiesel = $("#editPetrolDiesel");
-    // const savePetrolBtn = $("#savePetrolBtn");
-
-    function openAddPetrolStationModal() {
+    function openAddPromotionModal() {
         addPromotionName.val("");
-        addPromotionName.val("");
+        addPromotionDescription.val("");
+        addPromotionNumber.val("");
         addPromotionModal.modal("show");
     }
 
-    function closeAddPetrolStationModal() {
+    function closePromotionModal() {
         addPromotionModal.modal("hide");
     }
 
@@ -49,7 +37,7 @@ $(() => {
             makeAlert({text: "Błąd tworzenia promocji", type: "error"});
         }
 
-        closeAddPetrolStationModal();
+        closePromotionModal();
     }
 
     async function searchOwnedPromotions() {
@@ -60,25 +48,11 @@ $(() => {
 
         for (const promotion of promotions) {
 
-            const isOnlineSpan = $("<span>");
-
-            // async function handleLineStatusUpdate() {
-            //     const [isStation, isPylon] = await Promise.all([
-            //         myFetch("/api/petrolStation/isOnline", stationUniqueName),
-            //         myFetch("/api/pylon/isOnline", stationUniqueName)
-            //     ]);
-            //
-            //     isOnlineSpan.text([
-            //         isStation ? "Online" : "Offline",
-            //         isPylon ? "Online" : "Offline"
-            //     ].join("/"));
-            // }
-
             const editButton = $("<button>", {
                 text: "Edytuj",
                 type: "button",
                 class: "btn btn-primary",
-                //click: () => openEditPetrolStationModal(stationUniqueName)
+                click: () => openEditPromotionModal(promotion)
             })
 
             $("<tr>", {
@@ -92,50 +66,17 @@ $(() => {
                 appendTo: promotionsTbody
             });
 
-//            handleLineStatusUpdate();
         }
     }
 
-    function openEditPetrolStationModal(stationName) {
-        editPetrolStationModal.modal("show");
-
-        editUniqueName.val(stationName);
-
-        myFetch("/api/petrolStation/getStationDescription", stationName).then(stationDescription => {
-            editLogo.val(stationDescription.logo);
-            editCommonName.val(stationDescription.commonName);
-            editDescription.val(stationDescription.description);
-            editLatitude.val(stationDescription.latitude);
-            editLongitude.val(stationDescription.longitude);
-        });
-
-        myFetch("/api/petrolStation/getCurrentPetrolPrice", stationName).then(petrolprice => {
-            editPetrolPb95.val(petrolprice.pb95);
-            editPetrolPb98.val(petrolprice.pb98);
-            editPetrolDiesel.val(petrolprice.diesel);
-        });
-    }
-
-    async function saveDescription() {
-        myFetch("/api/petrolStation/setStationDescription", {
-            uniqueName: editUniqueName.val(),
-            stationDescription: {
-                logo: editLogo.val(),
-                commonName: editCommonName.val(),
-                description: editDescription.val(),
-                latitude: editLatitude.val(),
-                longitude: editLongitude.val()
-            }
-        });
-    }
-
-    async function savePetrol() {
-
+    function openEditPromotionModal(promotion){
+        addPromotionName.val(promotion.id);
+        addPromotionDescription.val(promotion.description);
+        addPromotionNumber.val(promotion.maxReservations);
+        addPromotionModal.modal("show");
     }
 
     promotionsSearchBtn.click(searchOwnedPromotions);
-    addPromotionShowModal.click(openAddPetrolStationModal);
+    addPromotionShowModal.click(openAddPromotionModal);
     addPromotionAccept.click(createNewPromotion);
-    savePetrolBtn.click(savePetrol);
-    saveDescriptionBtn.click(saveDescription);
 });

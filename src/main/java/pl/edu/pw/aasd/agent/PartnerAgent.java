@@ -86,15 +86,15 @@ public class PartnerAgent extends AgentWithFace<PartnerAgent.MyData> {
         this.data.partnerPromotions.put(promotion.getId(), promotion);
     }
 
-    public Collection<PartnerPromotion> getPromotions(){
+    public Collection<PartnerPromotion> getPromotions() {
         return this.data.partnerPromotions.values();
     }
 
-    static public DFAgentDescription[] findAll(Agent agent){
+    static public DFAgentDescription[] findAll(Agent agent) {
         return AgentHelper.findAllOf(agent, "PartnerAgent");
     }
 
-    static public Promise<Collection<PartnerPromotion>> getPromotions(Agent me, AID partner){
+    static public Promise<Collection<PartnerPromotion>> getPromotions(Agent me, AID partner) {
         return AgentHelper.requestInteraction(
                 me, partner,
                 ACLMessage.QUERY_REF, "getPromotions",
@@ -102,21 +102,19 @@ public class PartnerAgent extends AgentWithFace<PartnerAgent.MyData> {
         ).thenApply(jsonElement -> Jsonable.fromList(jsonElement, PartnerPromotion.class));
     }
 
-static public Promise<Boolean> reservePromotion(Agent me, String partnerName, JsonObject promotion){
-            return findByUniqueName(me, partnerName).thenApply(partner ->
-                    {
-                        try {
-                            return Jsonable.from(AgentHelper.requestInteraction(
-                                    me, partner.getName(),
-                                    ACLMessage.QUERY_REF, "reservePromotion",
-                                    promotion
-                            ).get(2, TimeUnit.SECONDS), Boolean.class);
-                        } catch (Throwable e) {
-                            e.printStackTrace();
-                            return Boolean.FALSE;
-                        }
-                    }
-            );
+    static public Promise<Boolean> reservePromotion(Agent me, String partnerName, JsonObject promotion) {
+        return findByUniqueName(me, partnerName).thenApply(partner -> {
+            try {
+                return Jsonable.from(AgentHelper.requestInteraction(
+                        me, partner.getName(),
+                        ACLMessage.QUERY_REF, "reservePromotion",
+                        promotion
+                ).get(2, TimeUnit.SECONDS), Boolean.class);
+            } catch (Throwable e) {
+                e.printStackTrace();
+                return Boolean.FALSE;
+            }
+        });
     }
 
     public static Promise<DFAgentDescription> findByUniqueName(Agent agent, String uniqueName) {

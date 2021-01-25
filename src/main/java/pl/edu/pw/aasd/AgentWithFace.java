@@ -1,13 +1,9 @@
 package pl.edu.pw.aasd;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
-import jade.core.AID;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import pl.edu.pw.aasd.agent.PetrolStationAgent;
-import pl.edu.pw.aasd.data.Near;
 import pl.edu.pw.aasd.data.PetrolPrice;
 import pl.edu.pw.aasd.data.StationDescription;
 
