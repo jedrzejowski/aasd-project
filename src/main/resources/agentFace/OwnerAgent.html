@@ -149,6 +149,38 @@
     </div>
 </div>
 
+<div class="container">
+    <div class="navbar">
+        <span class="navbar-brand">Inne stacje</span>
+        <ul class="navbar-nav navbar-right">
+            <li>
+                <button class="btn btn-secondary" id="searchNearPetrolStationsBtn">
+                    Wyszukaj bliskie stacje paliwowe
+                </button>
+            </li>
+            <li>
+                <input type="text" class="form-control" id="nearPetrolStationsRadius" placeholder="promien [km]">
+            </li>
+        </ul>
+    </div>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Nazwa</th>
+            <th scope="col">Położenie</th>
+            <th scope="col">Ceny</th>
+            <th scope="col"></th>
+        </tr>
+        </thead>
+        <tbody id="nearPetrolStationsTbody">
+
+        </tbody>
+    </table>
+
+</div>
+
 <script src="jquery.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW"

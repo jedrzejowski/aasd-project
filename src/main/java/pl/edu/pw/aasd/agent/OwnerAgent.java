@@ -2,14 +2,16 @@ package pl.edu.pw.aasd.agent;
 
 import com.google.gson.JsonObject;
 import jade.core.AID;
-import pl.edu.pw.aasd.AgentHelper;
-import pl.edu.pw.aasd.AgentWithFace;
-import pl.edu.pw.aasd.Boot;
-import pl.edu.pw.aasd.Jsonable;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import pl.edu.pw.aasd.*;
+import pl.edu.pw.aasd.data.Near;
+import pl.edu.pw.aasd.data.RadiusRequest;
 import pl.edu.pw.aasd.promise.Promise;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 
 public class OwnerAgent extends AgentWithFace<OwnerAgent.MyData> {
 
@@ -38,6 +40,65 @@ public class OwnerAgent extends AgentWithFace<OwnerAgent.MyData> {
             var uniqueName = request.get("uniqueName").getAsString();
             createPetrolStation(uniqueName).get();
             return new JsonObject();
+        });
+
+        this.handleHttpApi("/api/this/findNearPetrolStation", body -> {
+            var request = body.getAsJsonObject();
+            var radiusTemp = 0.0f;
+            try {
+                radiusTemp = Jsonable.from(request, RadiusRequest.class).getRadius();
+            } catch (Throwable e) {
+
+            }
+            var radius = radiusTemp;
+            float radiusInGeoCoords = radius / (float) 78.471863174;
+
+            //TODO zapytanie o lokacje
+            var near = new Near(
+                    0,
+                    0,
+                    radiusInGeoCoords
+            );
+            var descriptions = PetrolStationAgent.findNear(this, near);
+
+            var names = Arrays.stream(descriptions)
+                    .map(DFAgentDescription::getName)
+                    .map(aid -> {
+                        var obj = new JsonObject();
+                        obj.addProperty("name", aid.getName());
+
+                        try {
+                            var uniqueNamePromise = AgentWithUniqueName.getUniqueName(this, aid);
+                            var stationDescriptionPromise = PetrolStationAgent.getStationDescription(this, aid);
+                            var petrolPricePromise = PetrolStationAgent.getCurrentPetrolPrice(this, aid);
+                            if (radius > 0) {
+                                var stationDesc = stationDescriptionPromise.get();
+                                if (countSquareDistance(
+                                        stationDesc.getLatitude(),
+                                        near.getLatitude(),
+                                        stationDesc.getLongitude(),
+                                        near.getLongitude()) > near.getDistance() * near.getDistance()
+                                )
+                                    return null;
+                            }
+
+                            if (this.data.ownedPetrolStation.contains(uniqueNamePromise.get())) {
+                                return null;
+                            }
+
+                            obj.addProperty("uniqueName", uniqueNamePromise.get());
+                            obj.add("stationDescription", stationDescriptionPromise.get().toJson());
+                            obj.add("petrolPrice", petrolPricePromise.get().toJson());
+                        } catch (Throwable ignore) {
+                            return null;
+                        }
+
+                        return obj;
+                    })
+                    .filter(Objects::nonNull)
+                    .toArray();
+
+            return Jsonable.toJson(names);
         });
 
         if (Boot.DEBUG_CREATE_CHILDREN) {
@@ -94,4 +155,9 @@ public class OwnerAgent extends AgentWithFace<OwnerAgent.MyData> {
         return promise;
     }
 
+    private static double countSquareDistance(double lat1, double lat2, double long1, double long2) {
+        var temp1 = (lat1 - lat2);
+        var temp2 = (long1 - long2);
+        return temp1 * temp1 + temp2 * temp2;
+    }
 }

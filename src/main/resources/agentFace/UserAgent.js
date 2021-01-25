@@ -4,8 +4,8 @@ $(() => {
     const editVehicleLatitude = $("#editVehicleLatitude");
     const editVehicleLongitude = $("#editVehicleLongitude");
     const saveVehicleData = $("#saveVehicleData");
-    const searchNearPetrolStationsBtn = $("#searchNearPetrolStationsBtn");
     const searchCheapestPetrolStationsBtn = $("#searchCheapestPetrolStationsBtn");
+    const searchNearPetrolStationsBtn = $("#searchNearPetrolStationsBtn");
     const nearPetrolStationsTable = $("#nearPetrolStationsTable");
     const radius = $("#radius");
 
