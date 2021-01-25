@@ -2,11 +2,13 @@ package pl.edu.pw.aasd.data;
 
 import pl.edu.pw.aasd.Jsonable;
 
+import java.util.ArrayList;
+
 public class PartnerPromotion extends Jsonable {
     String id;
     String description;
     int maxReservations = 0;
-    int actualReservations = 0;
+    ArrayList<String> userIds = new ArrayList<>();
 
     public int getMaxReservations() {
         return maxReservations;
@@ -17,17 +19,19 @@ public class PartnerPromotion extends Jsonable {
     }
 
     public int getActualReservations() {
-        return actualReservations;
+        return userIds.size();
     }
 
-    public void setActualReservations(int actualReservations) {
-        this.actualReservations = actualReservations;
-    }
+    public boolean addUserToPromotion(String user) {
 
-    public boolean incrementReservations(){
-        if (actualReservations == maxReservations)
+        System.out.println("HERE1");
+        System.out.println(userIds.size());
+        System.out.println(maxReservations);
+        if (userIds.size() == maxReservations) {
             return false;
-        ++actualReservations;
+        }
+        userIds.add(user);
+        System.out.println("HERE2");
         return true;
     }
 

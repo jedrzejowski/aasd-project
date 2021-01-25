@@ -1,8 +1,11 @@
 package pl.edu.pw.aasd.data;
 
-public class PromotionReservationRequest {
+import pl.edu.pw.aasd.Jsonable;
+
+public class PromotionReservationRequest extends Jsonable {
     private String partner;
     private String promotionId;
+    private String userId;
 
     public String getPartner() {
         return partner;
@@ -18,5 +21,13 @@ public class PromotionReservationRequest {
 
     public void setPromotionId(String promotionId) {
         this.promotionId = promotionId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }

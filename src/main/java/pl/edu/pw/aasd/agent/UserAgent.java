@@ -65,7 +65,8 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
 //        PetrolStationAgent.getCurrentPetrolPrice(this, petrolAID);
 
         this.handleHttpApi("/api/this/reservePromotion", body -> {
-            var promotion = body.getAsJsonObject();
+            var promotion = Jsonable.from(body.getAsJsonObject(), PromotionReservationRequest.class);
+            promotion.setUserId(this.getUniqueName());
             var result = reservePromotion(promotion);
             return new JsonPrimitive(result);
         });
@@ -112,11 +113,11 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
             var radiusTemp = 0.0f;
             try {
                 radiusTemp = Jsonable.from(request, RadiusRequest.class).getRadius();
-            } catch (Throwable e){
+            } catch (Throwable e) {
 
             }
             var radius = radiusTemp;
-            float radiusInGeoCoords = radius / (float)78.471863174;
+            float radiusInGeoCoords = radius / (float) 78.471863174;
             var near = new Near(
                     this.data.vehicleData.getLatitude(),
                     this.data.vehicleData.getLongitude(),
@@ -165,18 +166,30 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
                     this.data.vehicleData.getLongitude(),
                     0
             );
+
             var descriptions = PetrolStationAgent.findAll(this);
+
             if (descriptions.length == 0)
                 return new JsonObject();
-            List<Double> values = new ArrayList<>();
-            List<PetrolPrice> prices = new ArrayList<>();
-            List<StationDescription> stationDescriptions = new ArrayList<>();
-            List<String> names = new ArrayList<>();
-            List<String> uniqueNames = new ArrayList<>();
-            Arrays.stream(descriptions)
+
+            class TempStruct extends Jsonable {
+                double value;
+                PetrolPrice petrolPrice;
+                StationDescription stationDescription;
+                String name;
+                String uniqueName;
+
+                public double getValue() {
+                    return value;
+                }
+            }
+
+            var stations = Arrays.stream(descriptions)
                     .map(DFAgentDescription::getName)
-                    .forEach(aid -> {
+                    .map(aid -> {
                         try {
+                            var tempStruct = new TempStruct();
+
                             var stationDescriptionPromise = PetrolStationAgent.getStationDescription(this, aid);
                             var petrolPricePromise = PetrolStationAgent.getCurrentPetrolPrice(this, aid);
 
@@ -185,27 +198,35 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
                             var userData = this.data.vehicleData;
 
                             var distance = Math.sqrt(countSquareDistance(stationDesc.getLatitude(), userData.getLatitude(), stationDesc.getLongitude(), userData.getLongitude()));
-                            var fuelNeeded = distance * (float)78.471863174 / 100 * userData.getFuelPerKilometer();
+                            var fuelNeeded = distance * (float) 78.471863174 / 100 * userData.getFuelPerKilometer();
 
-                            var realPrice = (userData.getFuelLeft() + fuelNeeded) * Double.parseDouble(petrolPrice.getPb95());
-                            values.add(realPrice);
-                            prices.add(petrolPrice);
-                            stationDescriptions.add(stationDesc);
-                            names.add(aid.getName());
-                            uniqueNames.add(AgentWithUniqueName.getUniqueName(this, aid).get());
-                        } catch (Throwable ignore) {
+                            tempStruct.value = (userData.getFuelLeft() + fuelNeeded) * Double.parseDouble(petrolPrice.getPb95());
+                            tempStruct.petrolPrice = petrolPrice;
+                            tempStruct.stationDescription = stationDesc;
+                            tempStruct.name = aid.getName();
+                            tempStruct.uniqueName = AgentWithUniqueName.getUniqueName(this, aid).get();
 
+                            return tempStruct;
+                        } catch (Throwable exception) {
+                            exception.printStackTrace();
+                            return null;
                         }
-                    });
-            int minimalIndex = 0;
-            for (int i = 1; i < values.size(); ++i)
-                if (values.get(i) > values.get(minimalIndex))
-                    minimalIndex = i;
+                    })
+                    .filter(Objects::nonNull)
+                    .sorted(Comparator.comparingDouble(TempStruct::getValue))
+                    .toArray();
+
+            var station = (TempStruct) stations[0];
+
+            if (station == null) {
+                return null;
+            }
+
             var obj = new JsonObject();
-            obj.addProperty("name", names.get(minimalIndex));
-            obj.addProperty("uniqueName", uniqueNames.get(minimalIndex));
-            obj.add("stationDescription", stationDescriptions.get(minimalIndex).toJson());
-            obj.add("petrolPrice", prices.get(minimalIndex).toJson());
+            obj.addProperty("name", station.name);
+            obj.addProperty("uniqueName", station.uniqueName);
+            obj.add("stationDescription", station.stationDescription.toJson());
+            obj.add("petrolPrice", station.petrolPrice.toJson());
             return obj;
         });
     }
@@ -219,17 +240,16 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
 
     }
 
-    private boolean reservePromotion(JsonObject promotionJson){
-        var promotion = Jsonable.from(promotionJson, PromotionReservationRequest.class);
+    private boolean reservePromotion(PromotionReservationRequest promotion) {
         try {
-            return PartnerAgent.reservePromotion(this, promotion.getPartner(), promotionJson).get();
+            return PartnerAgent.reservePromotion(this, promotion.getPartner(), promotion.toJson()).get();
         } catch (Throwable e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    private static double countSquareDistance(double lat1, double lat2, double long1, double long2){
+    private static double countSquareDistance(double lat1, double lat2, double long1, double long2) {
         var temp1 = (lat1 - lat2);
         var temp2 = (long1 - long2);
         return temp1 * temp1 + temp2 * temp2;

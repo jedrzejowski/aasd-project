@@ -1,5 +1,6 @@
 package pl.edu.pw.aasd.agent;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import jade.core.Agent;
@@ -13,10 +14,8 @@ import pl.edu.pw.aasd.data.PartnerPromotion;
 import pl.edu.pw.aasd.data.PromotionReservationRequest;
 import pl.edu.pw.aasd.promise.Promise;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class PartnerAgent extends AgentWithFace<PartnerAgent.MyData> {
@@ -42,11 +41,11 @@ public class PartnerAgent extends AgentWithFace<PartnerAgent.MyData> {
 
         AgentHelper.setupRequestResponder(this,
                 ACLMessage.QUERY_REF, "reservePromotion",
-                msg -> {
+                msg -> new Promise<JsonElement>().fulfillInAsync(() -> {
                     var reservation = Jsonable.from(msg.getContent(), PromotionReservationRequest.class);
-                    var result = this.data.partnerPromotions.get(reservation.getPromotionId()).incrementReservations();
-                    return Promise.fulfilled(new JsonPrimitive(result));
-                }
+                    var result = this.data.partnerPromotions.get(reservation.getPromotionId()).addUserToPromotion(reservation.getUserId());
+                    return new JsonPrimitive(result);
+                })
         );
 
         this.handleHttpApi("/api/this/createPromotion", body -> {
@@ -102,7 +101,7 @@ public class PartnerAgent extends AgentWithFace<PartnerAgent.MyData> {
         ).thenApply(jsonElement -> Jsonable.fromList(jsonElement, PartnerPromotion.class));
     }
 
-    static public Promise<Boolean> reservePromotion(Agent me, String partnerName, JsonObject promotion) {
+    static public Promise<Boolean> reservePromotion(Agent me, String partnerName, JsonElement promotion) {
         return findByUniqueName(me, partnerName).thenApply(partner -> {
             try {
                 return Jsonable.from(AgentHelper.requestInteraction(

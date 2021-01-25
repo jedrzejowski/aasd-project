@@ -108,7 +108,7 @@ $(() => {
                         $("<td>", {text: partner.uniqueName}),
                         $("<td>", {text: promotion.id}),
                         $("<td>", {append: promotion.description}),
-                        $("<td>", {text: promotion.actualReservations + '/' + promotion.maxReservations}),
+                        $("<td>", {text: promotion.userIds.length + '/' + promotion.maxReservations}),
                         $("<td>", {append: [reserveButton]})
                     ],
                     appendTo: promotionsTable
