@@ -1,6 +1,7 @@
 package pl.edu.pw.aasd.agent;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -12,10 +13,12 @@ import pl.edu.pw.aasd.data.PetrolPrice;
 import pl.edu.pw.aasd.data.StationDescription;
 import pl.edu.pw.aasd.promise.Promise;
 
+import java.util.concurrent.ExecutionException;
+
 public class PylonAgent extends AgentWithFace<PylonAgent.MyData> {
 
     static class MyData extends Jsonable {
-        PetrolPrice price;
+//        PetrolPrice petrolPrice;
     }
 
     @Override
@@ -25,16 +28,18 @@ public class PylonAgent extends AgentWithFace<PylonAgent.MyData> {
 
     @Override
     protected void setup() {
+        super.setup();
 
+        this.handleHttpApi("/api/this/getPetrolPrice", body -> {
+            return getPetrolPrice().get().toJson();
+        });
 
-        // Aktualizacja ceny
-        AgentHelper.setupRequestResponder(this,
-                ACLMessage.REQUEST, "setPrice",
-                msg -> new Promise<JsonElement>().fulfillInAsync(() -> {
-                    OwnerAgent.authOwner(msg.getSender()).get();
-                    return null;
-                })
-        );
+        this.handleHttpApi("/api/this/setPetrolPrice", body -> {
+            var petrolPrice = Jsonable.from(body, PetrolPrice.class);
+            var station = getPetrolStationAgent().get();
+            var success = PetrolStationAgent.setStationPrices(this, station, petrolPrice).get();
+            return new JsonPrimitive(success);
+        });
     }
 
     public Promise<AID> getPetrolStationAgent() {
@@ -43,12 +48,17 @@ public class PylonAgent extends AgentWithFace<PylonAgent.MyData> {
     }
 
     public Promise<StationDescription> getPetrolStationDescription() {
-        var promise = new Promise<StationDescription>();
-        promise.fulfillInAsync(() -> {
+        return new Promise<StationDescription>().fulfillInAsync(() -> {
             var aid = getPetrolStationAgent().get();
             return PetrolStationAgent.getStationDescription(this, aid).get();
         });
-        return promise;
+    }
+
+    public Promise<PetrolPrice> getPetrolPrice() {
+        return new Promise<PetrolPrice>().fulfillInAsync(() -> {
+            var aid = getPetrolStationAgent().get();
+            return PetrolStationAgent.getCurrentPetrolPrice(this, aid).get();
+        });
     }
 
     public static Promise<DFAgentDescription> findByUniqueName(Agent agent, String uniqueName) {

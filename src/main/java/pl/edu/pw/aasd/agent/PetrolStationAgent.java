@@ -161,7 +161,7 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
 
             var pylonAgent = cc.createNewAgent(
                     "PylonOf" + this.getUniqueName(),
-                    "pl.edu.pw.aasd.agent.PylonAgent",
+                    PylonAgent.class.getName(),
                     new Object[]{
                             this.getUniqueName()
                     }
