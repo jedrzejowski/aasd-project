@@ -24,7 +24,8 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
     static class MyData extends Jsonable {
         StationDescription stationDescription = new StationDescription();
         PetrolPrice currentPetrolPrice = new PetrolPrice();
-        Collection<UserVote> votes = new ArrayList<>();
+        Collection<UserVote> votes1 = new ArrayList<>();
+        Collection<UserVote> votes2 = new ArrayList<>();
     }
 
     @Override
@@ -70,6 +71,24 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
                 })
         );
 
+        AgentHelper.setupRequestResponder(this,
+                ACLMessage.REQUEST, "saveVote1Petrol",
+                msg -> new Promise<JsonElement>().fulfillInAsync(() -> {
+                    var userVote = Jsonable.from(msg.getContent(), UserVote.class);
+                    this.data.votes1.add(userVote);
+                    return new JsonPrimitive(true);
+                })
+        );
+
+        AgentHelper.setupRequestResponder(this,
+                ACLMessage.REQUEST, "saveVote2Petrol",
+                msg -> new Promise<JsonElement>().fulfillInAsync(() -> {
+                    var userVote = Jsonable.from(msg.getContent(), UserVote.class);
+                    this.data.votes2.add(userVote);
+                    return new JsonPrimitive(true);
+                })
+        );
+
         if (Boot.DEBUG_CREATE_CHILDREN) {
             this.createPylon();
         }
@@ -99,7 +118,7 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
         ).thenApply(JsonElement::getAsBoolean);
     }
 
-    public static Promise<Boolean> setStationPrices(Agent me, AID station, PetrolPrice pp){
+    public static Promise<Boolean> setStationPrices(Agent me, AID station, PetrolPrice pp) {
         return AgentHelper.requestInteraction(
                 me, station,
                 ACLMessage.REQUEST, "setStationPrices",
@@ -107,6 +126,21 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
         ).thenApply(JsonElement::getAsBoolean);
     }
 
+    public static Promise<Boolean> saveVote1Petrol(Agent me, AID station, UserVote vote) {
+        return AgentHelper.requestInteraction(
+                me, station,
+                ACLMessage.REQUEST, "saveVote1Petrol",
+                vote.toJson()
+        ).thenApply(JsonElement::getAsBoolean);
+    }
+
+    public static Promise<Boolean> saveVote2Petrol(Agent me, AID station, UserVote vote) {
+        return AgentHelper.requestInteraction(
+                me, station,
+                ACLMessage.REQUEST, "saveVote2Petrol",
+                vote.toJson()
+        ).thenApply(JsonElement::getAsBoolean);
+    }
 
     public static DFAgentDescription[] findAll(Agent agent) {
         return AgentHelper.findAllOf(agent, "petrolStation");

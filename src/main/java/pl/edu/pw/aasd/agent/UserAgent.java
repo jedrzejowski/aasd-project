@@ -229,6 +229,34 @@ public class UserAgent extends AgentWithFace<UserAgent.MyData> {
             obj.add("petrolPrice", station.petrolPrice.toJson());
             return obj;
         });
+
+        this.handleHttpApi("/api/this/saveVote1Petrol", body -> {
+            var request = body.getAsJsonObject();
+            var uniqueName = request.get("uniqueName").getAsString();
+            var petrolPrice = Jsonable.from(request.get("petrolPrice"), PetrolPrice.class);
+
+            var vote = new UserVote();
+            vote.setUserId(this.getUniqueName());
+            vote.setPetrolPrice(petrolPrice);
+
+            var aid = PetrolStationAgent.findByUniqueName(this, uniqueName).get().getName();
+            var success = PetrolStationAgent.saveVote1Petrol(this, aid, vote).get();
+            return new JsonPrimitive(success);
+        });
+
+        this.handleHttpApi("/api/this/saveVote2Petrol", body -> {
+            var request = body.getAsJsonObject();
+            var uniqueName = request.get("uniqueName").getAsString();
+            var petrolPrice = Jsonable.from(request.get("petrolPrice"), PetrolPrice.class);
+
+            var vote = new UserVote();
+            vote.setUserId(this.getUniqueName());
+            vote.setPetrolPrice(petrolPrice);
+
+            var aid = PetrolStationAgent.findByUniqueName(this, uniqueName).get().getName();
+            var success = PetrolStationAgent.saveVote2Petrol(this, aid, vote).get();
+            return new JsonPrimitive(success);
+        });
     }
 
 

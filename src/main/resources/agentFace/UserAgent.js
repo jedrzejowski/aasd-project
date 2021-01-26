@@ -9,6 +9,14 @@ $(() => {
     const nearPetrolStationsTable = $("#nearPetrolStationsTable");
     const radius = $("#radius");
 
+    const votePetrolStationModal = $("#votePetrolStationModal").modal({});
+    const votePetrolUniqueName = $("#votePetrolUniqueName");
+    const votePetrolPb95 = $("#votePetrolPb95");
+    const votePetrolPb98 = $("#votePetrolPb98");
+    const votePetrolDiesel = $("#votePetrolDiesel");
+    const saveVote1PetrolBtn = $("#saveVote1PetrolBtn");
+    const saveVote2PetrolBtn = $("#saveVote2PetrolBtn");
+
     const searchPromotionsBtn = $("#searchPromotionsBtn");
     const promotionsTable = $("#promotionsTable");
 
@@ -32,7 +40,7 @@ $(() => {
     }
 
     async function searchNearPetrolStations() {
-        const stations = await myFetch("/api/this/findNearPetrolStation",{
+        const stations = await myFetch("/api/this/findNearPetrolStation", {
             radius: radius.val()
         }) ?? [];
 
@@ -41,20 +49,18 @@ $(() => {
         let i = 0;
         for (const station of stations) {
 
-            const isOnlineSpan = $("<span>");
-
             const editButton = $("<button>", {
                 text: "Pokaż",
                 type: "button",
                 class: "btn btn-primary",
-                click: () => {}
+                click: () => openVotePetrolStationModal(station)
             });
 
             $("<tr>", {
                 append: [
                     $("<td>", {text: ++i}),
                     $("<td>", {text: station.stationDescription.commonName}),
-                    $("<td>", {text: station.stationDescription.latitude+"/"+station.stationDescription.longitude}),
+                    $("<td>", {text: station.stationDescription.latitude + "/" + station.stationDescription.longitude}),
                     $("<td>", {append: JSON.stringify(station.petrolPrice)}),
                     $("<td>", {append: [editButton]})
                 ],
@@ -63,21 +69,52 @@ $(() => {
         }
     }
 
-    async function searchCheapestPetrolStations(){
+    function openVotePetrolStationModal(station) {
+        votePetrolStationModal.modal("show");
+
+        votePetrolUniqueName.val(station.uniqueName)
+        votePetrolPb95.val(station.petrolPrice.pb95);
+        votePetrolPb98.val(station.petrolPrice.pb98);
+        votePetrolDiesel.val(station.petrolPrice.diesel);
+    }
+
+    function saveVote1Petrol() {
+        myFetch("/api/this/saveVote1Petrol", {
+            uniqueName: votePetrolUniqueName.val(),
+            petrolPrice: {
+                pb95: votePetrolPb95.val(),
+                pb98: votePetrolPb98.val(),
+                diesel: votePetrolDiesel.val(),
+            }
+        })
+    }
+
+    function saveVote2Petrol() {
+        myFetch("/api/this/saveVote2Petrol", {
+            uniqueName: votePetrolUniqueName.val(),
+            petrolPrice: {
+                pb95: votePetrolPb95.val(),
+                pb98: votePetrolPb98.val(),
+                diesel: votePetrolDiesel.val(),
+            }
+        })
+    }
+
+    async function searchCheapestPetrolStations() {
         const station = await myFetch("/api/this/findCheapestPetrolStation") ?? [];
         nearPetrolStationsTable.empty();
         $("<tr>", {
             append: [
                 $("<td>", {text: '1'}),
                 $("<td>", {text: station.stationDescription.commonName}),
-                $("<td>", {text: station.stationDescription.latitude+"/"+station.stationDescription.longitude}),
+                $("<td>", {text: station.stationDescription.latitude + "/" + station.stationDescription.longitude}),
                 $("<td>", {append: JSON.stringify(station.petrolPrice)}),
             ],
             appendTo: nearPetrolStationsTable
         });
     }
 
-    async function reservePromotion(partnerUniqueName, promotionId){
+    async function reservePromotion(partnerUniqueName, promotionId) {
         var result = await myFetch("/api/this/reservePromotion", {
             partner: partnerUniqueName,
             promotionId: promotionId,
@@ -121,6 +158,8 @@ $(() => {
     searchNearPetrolStationsBtn.click(searchNearPetrolStations);
     searchPromotionsBtn.click(searchPromotions);
     searchCheapestPetrolStationsBtn.click(searchCheapestPetrolStations);
+    saveVote1PetrolBtn.click(saveVote1Petrol);
+    saveVote2PetrolBtn.click(saveVote2Petrol);
 
     fetchGetVehicleData();
 });
