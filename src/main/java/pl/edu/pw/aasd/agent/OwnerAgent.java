@@ -44,22 +44,8 @@ public class OwnerAgent extends AgentWithFace<OwnerAgent.MyData> {
 
         this.handleHttpApi("/api/this/findNearPetrolStation", body -> {
             var request = body.getAsJsonObject();
-            var radiusTemp = 0.0f;
-            try {
-                radiusTemp = Jsonable.from(request, RadiusRequest.class).getRadius();
-            } catch (Throwable e) {
 
-            }
-            var radius = radiusTemp;
-            float radiusInGeoCoords = radius / (float) 78.471863174;
-
-            //TODO zapytanie o lokacje
-            var near = new Near(
-                    0,
-                    0,
-                    radiusInGeoCoords
-            );
-            var descriptions = PetrolStationAgent.findNear(this, near);
+            var descriptions = PetrolStationAgent.findAll(this);
 
             var names = Arrays.stream(descriptions)
                     .map(DFAgentDescription::getName)
@@ -71,16 +57,6 @@ public class OwnerAgent extends AgentWithFace<OwnerAgent.MyData> {
                             var uniqueNamePromise = AgentWithUniqueName.getUniqueName(this, aid);
                             var stationDescriptionPromise = PetrolStationAgent.getStationDescription(this, aid);
                             var petrolPricePromise = PetrolStationAgent.getCurrentPetrolPrice(this, aid);
-                            if (radius > 0) {
-                                var stationDesc = stationDescriptionPromise.get();
-                                if (countSquareDistance(
-                                        stationDesc.getLatitude(),
-                                        near.getLatitude(),
-                                        stationDesc.getLongitude(),
-                                        near.getLongitude()) > near.getDistance() * near.getDistance()
-                                )
-                                    return null;
-                            }
 
                             if (this.data.ownedPetrolStation.contains(uniqueNamePromise.get())) {
                                 return null;

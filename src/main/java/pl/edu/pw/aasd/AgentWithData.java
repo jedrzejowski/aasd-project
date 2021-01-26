@@ -20,6 +20,7 @@ public abstract class AgentWithData<Data extends Jsonable> extends AgentWithUniq
 
     protected void saveState() {
         try {
+            System.out.println("HERE");
             Files.write(this.getDataFileName(), data.toJson().toString().getBytes(StandardCharsets.UTF_8));
         } catch (Throwable err) {
             err.printStackTrace();

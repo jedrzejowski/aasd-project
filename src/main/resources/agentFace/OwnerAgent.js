@@ -138,7 +138,6 @@ $(() => {
 
     async function searchNearPetrolStations() {
         const stations = await myFetch("/api/this/findNearPetrolStation",{
-            radius: nearPetrolStationsRadius.val()
         }) ?? [];
 
         nearPetrolStationsTbody.empty();
