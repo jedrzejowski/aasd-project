@@ -2,9 +2,12 @@ package pl.edu.pw.aasd.data;
 
 import pl.edu.pw.aasd.Jsonable;
 
+import java.util.Date;
+
 public class UserVote extends Jsonable {
     String userId;
     PetrolPrice petrolPrice;
+    Date timestamp;
 
     public UserVote() {
     }
@@ -27,5 +30,13 @@ public class UserVote extends Jsonable {
 
     public void setPetrolPrice(PetrolPrice petrolPrice) {
         this.petrolPrice = petrolPrice;
+    }
+
+    public Date getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Date timestamp) {
+        this.timestamp = timestamp;
     }
 }

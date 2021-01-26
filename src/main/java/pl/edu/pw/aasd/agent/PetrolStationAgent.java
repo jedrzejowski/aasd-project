@@ -18,6 +18,7 @@ import pl.edu.pw.aasd.promise.Promise;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 
 public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData> {
 
@@ -75,6 +76,7 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
                 ACLMessage.REQUEST, "saveVote1Petrol",
                 msg -> new Promise<JsonElement>().fulfillInAsync(() -> {
                     var userVote = Jsonable.from(msg.getContent(), UserVote.class);
+                    userVote.setTimestamp(new Date());
                     this.data.votes1.add(userVote);
                     return new JsonPrimitive(true);
                 })
@@ -84,6 +86,7 @@ public class PetrolStationAgent extends AgentWithFace<PetrolStationAgent.MyData>
                 ACLMessage.REQUEST, "saveVote2Petrol",
                 msg -> new Promise<JsonElement>().fulfillInAsync(() -> {
                     var userVote = Jsonable.from(msg.getContent(), UserVote.class);
+                    userVote.setTimestamp(new Date());
                     this.data.votes2.add(userVote);
                     return new JsonPrimitive(true);
                 })

@@ -23,15 +23,10 @@ public class PartnerPromotion extends Jsonable {
     }
 
     public boolean addUserToPromotion(String user) {
-
-        System.out.println("HERE1");
-        System.out.println(userIds.size());
-        System.out.println(maxReservations);
         if (userIds.size() == maxReservations) {
             return false;
         }
         userIds.add(user);
-        System.out.println("HERE2");
         return true;
     }
 
